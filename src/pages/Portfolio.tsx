@@ -316,8 +316,9 @@ const Portfolio = () => {
               <Button variant="outline" size="sm" onClick={handleShare}>
                 <Share2 className="h-4 w-4 mr-2" /> Share
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadCV}>
-                <Download className="h-4 w-4 mr-2" /> CV
+              <Button variant="outline" size="sm" onClick={handleDownloadCV} disabled={downloadingCV}>
+                {downloadingCV ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                CV
               </Button>
             </div>
           </div>
