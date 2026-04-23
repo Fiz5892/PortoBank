@@ -1,16 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Layout from "@/components/layout/Layout";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <Layout>
+      <section className="container py-20 md:py-32">
+        <div className="max-w-3xl mx-auto text-center animate-fade-in">
+          <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-secondary text-primary mb-6">
+            Coming soon
+          </span>
+          <h1 className="font-heading text-4xl md:text-6xl font-bold tracking-tight">
+            Your professional portfolio,{" "}
+            <span className="text-primary">beautifully built.</span>
+          </h1>
+          <p className="mt-6 text-lg text-muted-foreground">
+            PortoBank is the modern portfolio platform for every profession — from designers and
+            developers to doctors, chefs, and architects.
+          </p>
+        </div>
+      </section>
+    </Layout>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
