@@ -5,9 +5,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/", label: "Explore" },
-  { to: "/about", label: "About" },
-  { to: "/pricing", label: "Pricing" },
+  { to: "/", label: "Home" },
+  { to: "/explore", label: "Explore" },
 ];
 
 const Navbar = () => {
@@ -45,10 +44,10 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-2">
           <Button variant="ghost" asChild>
-            <Link to="/auth">Sign in</Link>
+            <Link to="/login">Sign in</Link>
           </Button>
           <Button asChild>
-            <Link to="/auth?mode=signup">Get started</Link>
+            <Link to="/register">Get started</Link>
           </Button>
         </div>
 
@@ -82,10 +81,10 @@ const Navbar = () => {
             ))}
             <div className="flex flex-col gap-2 pt-2 border-t border-border mt-2">
               <Button variant="ghost" asChild>
-                <Link to="/auth" onClick={() => setOpen(false)}>Sign in</Link>
+                <Link to="/login" onClick={() => setOpen(false)}>Sign in</Link>
               </Button>
               <Button asChild>
-                <Link to="/auth?mode=signup" onClick={() => setOpen(false)}>Get started</Link>
+                <Link to="/register" onClick={() => setOpen(false)}>Get started</Link>
               </Button>
             </div>
           </div>
