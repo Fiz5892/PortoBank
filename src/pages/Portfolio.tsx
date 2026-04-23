@@ -32,6 +32,8 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import ProjectModal, { PortfolioItemData } from "@/components/portfolio/ProjectModal";
+import { fetchCVDataByUserId } from "@/lib/cv-data";
+import { downloadCV } from "@/lib/cv-pdf";
 
 interface ProfileFull {
   id: string;
@@ -177,8 +179,24 @@ const Portfolio = () => {
     }
   };
 
-  const handleDownloadCV = () => {
-    toast("Coming Soon", { description: "CV download will be available shortly." });
+  const [downloadingCV, setDownloadingCV] = useState(false);
+  const handleDownloadCV = async () => {
+    if (!profile) return;
+    setDownloadingCV(true);
+    try {
+      const data = await fetchCVDataByUserId(profile.user_id);
+      if (!data) {
+        toast.error("Could not load CV data");
+        return;
+      }
+      await downloadCV(data);
+      toast.success("CV downloaded");
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not generate CV");
+    } finally {
+      setDownloadingCV(false);
+    }
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
