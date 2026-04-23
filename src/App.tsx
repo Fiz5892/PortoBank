@@ -7,6 +7,8 @@ import Index from "./pages/Index.tsx";
 import Explore from "./pages/Explore.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import Onboarding from "./pages/Onboarding.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/explore" element={<Explore />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           {/* Public portfolio by username — keep as last meaningful route before catch-all */}
           <Route path="/:username" element={<Portfolio />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
