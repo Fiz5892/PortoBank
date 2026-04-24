@@ -44,7 +44,7 @@ const Index = () => {
     const load = async () => {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username, full_name, profession, location, avatar_url, skills(name)")
+        .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)")
         .eq("is_public", true)
         .eq("is_active", true)
         .order("created_at", { ascending: false })
