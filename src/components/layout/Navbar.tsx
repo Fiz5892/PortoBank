@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import NotificationsBell from "@/components/social/NotificationsBell";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -88,7 +89,9 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-2">
           {user ? (
-            <DropdownMenu>
+            <>
+              <NotificationsBell />
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
                   <Avatar className="h-9 w-9">
