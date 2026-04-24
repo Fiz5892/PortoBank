@@ -14,6 +14,13 @@ import EditProfile from "./pages/dashboard/EditProfile.tsx";
 import Inbox from "./pages/dashboard/Inbox.tsx";
 import DashboardSettings from "./pages/dashboard/Settings.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
+import AdminLogin from "./pages/admin/AdminLogin.tsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
+import AdminPortfolios from "./pages/admin/AdminPortfolios.tsx";
+import AdminReports from "./pages/admin/AdminReports.tsx";
+import AdminCategories from "./pages/admin/AdminCategories.tsx";
+import AdminLogs from "./pages/admin/AdminLogs.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -35,6 +42,14 @@ const App = () => (
           <Route path="/dashboard/profile" element={<EditProfile />} />
           <Route path="/dashboard/inbox" element={<Inbox />} />
           <Route path="/dashboard/settings" element={<DashboardSettings />} />
+          {/* Admin */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/portfolios" element={<AdminPortfolios />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
+          <Route path="/admin/categories" element={<AdminCategories />} />
+          <Route path="/admin/logs" element={<AdminLogs />} />
           {/* Public portfolio by username — keep as last meaningful route before catch-all */}
           <Route path="/:username" element={<Portfolio />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
