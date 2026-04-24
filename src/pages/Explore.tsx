@@ -29,7 +29,7 @@ const Explore = () => {
       setProfiles(null);
       let req = supabase
         .from("profiles")
-        .select("id, username, full_name, profession, location, avatar_url, skills(name)", {
+        .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)", {
           count: "exact",
         })
         .eq("is_public", true)
