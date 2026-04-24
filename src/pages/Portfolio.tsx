@@ -13,27 +13,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import {
   MapPin,
-  Heart,
   Share2,
   Download,
   ExternalLink,
   Loader2,
   Mail,
+  MoreHorizontal,
+  Flag,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import ProjectModal, { PortfolioItemData } from "@/components/portfolio/ProjectModal";
 import { fetchCVDataByUserId } from "@/lib/cv-data";
 import { downloadCV } from "@/lib/cv-pdf";
+import LikeButton from "@/components/social/LikeButton";
+import LoginToActModal from "@/components/social/LoginToActModal";
+import ReportProfileDialog from "@/components/social/ReportProfileDialog";
 
 interface ProfileFull {
   id: string;
@@ -46,10 +49,9 @@ interface ProfileFull {
   profession: string | null;
 }
 
-const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.string().trim().email("Invalid email").max(255),
-  message: z.string().trim().min(1, "Message is required").max(1000),
+const messageSchema = z.object({
+  subject: z.string().trim().min(1, "Subject is required").max(150),
+  body: z.string().trim().min(1, "Message is required").max(2000),
 });
 
 const Portfolio = () => {
@@ -61,27 +63,25 @@ const Portfolio = () => {
   const [notFound, setNotFound] = useState(false);
   const [skills, setSkills] = useState<{ name: string; category: string | null }[]>([]);
   const [items, setItems] = useState<PortfolioItemData[]>([]);
-  const [likeCount, setLikeCount] = useState(0);
-  const [hasLiked, setHasLiked] = useState(false);
+  const [portfolioId, setPortfolioId] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<PortfolioItemData | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
-  const [contact, setContact] = useState({ name: "", email: "", message: "" });
-  const [contactErrors, setContactErrors] = useState<Partial<Record<keyof typeof contact, string>>>({});
+  const [msg, setMsg] = useState({ subject: "", body: "" });
+  const [msgErrors, setMsgErrors] = useState<Partial<Record<keyof typeof msg, string>>>({});
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!username) return;
     const load = async () => {
-      // Try by username first, fallback to id (for users without a username yet)
-      let q = supabase
+      const { data: byUsername } = await supabase
         .from("profiles")
         .select("id, user_id, username, full_name, bio, avatar_url, location, profession")
         .eq("is_public", true)
         .eq("is_active", true)
+        .eq("username", username)
         .limit(1);
-
-      const { data: byUsername } = await q.eq("username", username);
       let profileRow = byUsername?.[0];
 
       if (!profileRow) {
@@ -112,6 +112,8 @@ const Portfolio = () => {
       setSkills(skillsData ?? []);
 
       const portfolioIds = (portfoliosData ?? []).map((p) => p.id);
+      setPortfolioId(portfolioIds[0] ?? null);
+
       if (portfolioIds.length > 0) {
         const { data: itemsData } = await supabase
           .from("portfolio_items")
@@ -119,56 +121,10 @@ const Portfolio = () => {
           .in("portfolio_id", portfolioIds)
           .order("created_at", { ascending: false });
         setItems((itemsData as PortfolioItemData[]) ?? []);
-
-        const { count } = await supabase
-          .from("likes")
-          .select("*", { count: "exact", head: true })
-          .in("portfolio_id", portfolioIds);
-        setLikeCount(count ?? 0);
-
-        if (user) {
-          const { data: myLike } = await supabase
-            .from("likes")
-            .select("id")
-            .eq("user_id", user.id)
-            .in("portfolio_id", portfolioIds)
-            .limit(1);
-          setHasLiked((myLike?.length ?? 0) > 0);
-        }
       }
     };
     load();
-  }, [username, user]);
-
-  const handleLike = async () => {
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-    if (!profile) return;
-    const { data: portfoliosData } = await supabase
-      .from("portfolios")
-      .select("id")
-      .eq("user_id", profile.user_id)
-      .eq("is_published", true)
-      .limit(1);
-    const portfolioId = portfoliosData?.[0]?.id;
-    if (!portfolioId) return;
-
-    if (hasLiked) {
-      await supabase.from("likes").delete().eq("user_id", user.id).eq("portfolio_id", portfolioId);
-      setHasLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      const { error } = await supabase
-        .from("likes")
-        .insert({ user_id: user.id, portfolio_id: portfolioId });
-      if (!error) {
-        setHasLiked(true);
-        setLikeCount((c) => c + 1);
-      }
-    }
-  };
+  }, [username]);
 
   const handleShare = async () => {
     try {
@@ -199,30 +155,34 @@ const Portfolio = () => {
     }
   };
 
-  const handleContactSubmit = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
     if (!user) {
       setShowLoginModal(true);
       return;
     }
-    const parsed = contactSchema.safeParse(contact);
-    if (!parsed.success) {
-      const newErrors: typeof contactErrors = {};
-      parsed.error.errors.forEach((err) => {
-        const k = err.path[0] as keyof typeof contact;
-        newErrors[k] = err.message;
-      });
-      setContactErrors(newErrors);
+    if (user.id === profile.user_id) {
+      toast.error("You cannot message yourself.");
       return;
     }
-    setContactErrors({});
+    const parsed = messageSchema.safeParse(msg);
+    if (!parsed.success) {
+      const newErrors: typeof msgErrors = {};
+      parsed.error.errors.forEach((err) => {
+        const k = err.path[0] as keyof typeof msg;
+        newErrors[k] = err.message;
+      });
+      setMsgErrors(newErrors);
+      return;
+    }
+    setMsgErrors({});
     setSending(true);
     const { error } = await supabase.from("messages").insert({
       sender_id: user.id,
       receiver_id: profile.user_id,
-      subject: `New message from ${parsed.data.name}`,
-      body: `${parsed.data.message}\n\nReply to: ${parsed.data.email}`,
+      subject: parsed.data.subject,
+      body: parsed.data.body,
     });
     setSending(false);
     if (error) {
@@ -230,7 +190,7 @@ const Portfolio = () => {
       return;
     }
     toast.success("Message sent!");
-    setContact({ name: "", email: "", message: "" });
+    setMsg({ subject: "", body: "" });
   };
 
   if (notFound) {
@@ -268,6 +228,7 @@ const Portfolio = () => {
 
   const displayName = profile.full_name || profile.username || "Anonymous";
   const initials = displayName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+  const isOwnProfile = user?.id === profile.user_id;
 
   return (
     <Layout>
@@ -304,15 +265,13 @@ const Portfolio = () => {
               )}
             </div>
 
-            <div className="flex md:flex-col gap-2 flex-wrap">
-              <Button
-                variant={hasLiked ? "default" : "outline"}
+            <div className="flex md:flex-col gap-2 flex-wrap items-start">
+              <LikeButton
+                ownerUserId={profile.user_id}
+                portfolioId={portfolioId ?? undefined}
                 size="sm"
-                onClick={handleLike}
-              >
-                <Heart className={`h-4 w-4 mr-2 ${hasLiked ? "fill-current" : ""}`} />
-                {likeCount}
-              </Button>
+                variant="outline"
+              />
               <Button variant="outline" size="sm" onClick={handleShare}>
                 <Share2 className="h-4 w-4 mr-2" /> Share
               </Button>
@@ -320,6 +279,29 @@ const Portfolio = () => {
                 {downloadingCV ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
                 CV
               </Button>
+              {!isOwnProfile && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More actions">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (!user) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        setShowReportModal(true);
+                      }}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Flag className="h-4 w-4 mr-2" /> Report this profile
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </Card>
@@ -415,55 +397,55 @@ const Portfolio = () => {
                 <Mail className="h-4 w-4 text-primary" />
                 <h2 className="font-heading font-semibold">Send a message</h2>
               </div>
-              <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="c-name">Name</Label>
-                  <Input
-                    id="c-name"
-                    value={contact.name}
-                    onChange={(e) => setContact({ ...contact, name: e.target.value })}
-                    className="mt-1.5"
-                  />
-                  {contactErrors.name && (
-                    <p className="text-xs text-destructive mt-1">{contactErrors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="c-email">Email</Label>
-                  <Input
-                    id="c-email"
-                    type="email"
-                    value={contact.email}
-                    onChange={(e) => setContact({ ...contact, email: e.target.value })}
-                    className="mt-1.5"
-                  />
-                  {contactErrors.email && (
-                    <p className="text-xs text-destructive mt-1">{contactErrors.email}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="c-message">Message</Label>
-                  <Textarea
-                    id="c-message"
-                    rows={5}
-                    value={contact.message}
-                    onChange={(e) => setContact({ ...contact, message: e.target.value })}
-                    className="mt-1.5"
-                  />
-                  {contactErrors.message && (
-                    <p className="text-xs text-destructive mt-1">{contactErrors.message}</p>
-                  )}
-                </div>
-                <Button type="submit" disabled={sending}>
-                  {sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Send message
-                </Button>
-                {!user && (
-                  <p className="text-xs text-muted-foreground">
-                    You'll need to sign in to send a message.
+
+              {!user ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Login to send a message to {displayName}.
                   </p>
-                )}
-              </form>
+                  <Button onClick={() => navigate("/login")}>
+                    <LogIn className="h-4 w-4 mr-2" /> Login to send a message
+                  </Button>
+                </div>
+              ) : isOwnProfile ? (
+                <p className="text-sm text-muted-foreground">
+                  This is your own profile.
+                </p>
+              ) : (
+                <form onSubmit={handleSendMessage} className="space-y-4">
+                  <div>
+                    <Label htmlFor="m-subject">Subject</Label>
+                    <Input
+                      id="m-subject"
+                      value={msg.subject}
+                      onChange={(e) => setMsg({ ...msg, subject: e.target.value })}
+                      placeholder="Project collaboration"
+                      className="mt-1.5"
+                    />
+                    {msgErrors.subject && (
+                      <p className="text-xs text-destructive mt-1">{msgErrors.subject}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="m-body">Message</Label>
+                    <Textarea
+                      id="m-body"
+                      rows={6}
+                      value={msg.body}
+                      onChange={(e) => setMsg({ ...msg, body: e.target.value })}
+                      placeholder="Hi, I'd love to chat about..."
+                      className="mt-1.5"
+                    />
+                    {msgErrors.body && (
+                      <p className="text-xs text-destructive mt-1">{msgErrors.body}</p>
+                    )}
+                  </div>
+                  <Button type="submit" disabled={sending}>
+                    {sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Send message
+                  </Button>
+                </form>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
@@ -471,22 +453,19 @@ const Portfolio = () => {
 
       <ProjectModal item={openItem} onOpenChange={(o) => !o && setOpenItem(null)} />
 
-      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sign in required</DialogTitle>
-            <DialogDescription>
-              Create a free account or sign in to interact with this portfolio.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => navigate("/login")}>
-              Sign in
-            </Button>
-            <Button onClick={() => navigate("/register")}>Create account</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LoginToActModal
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        title="Sign in required"
+        description="Create a free account or sign in to interact with this portfolio."
+      />
+
+      <ReportProfileDialog
+        open={showReportModal}
+        onOpenChange={setShowReportModal}
+        targetUserId={profile.user_id}
+        onLoginRequired={() => setShowLoginModal(true)}
+      />
     </Layout>
   );
 };
