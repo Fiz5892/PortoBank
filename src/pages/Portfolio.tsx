@@ -37,6 +37,7 @@ import { downloadCV } from "@/lib/cv-pdf";
 import LikeButton from "@/components/social/LikeButton";
 import LoginToActModal from "@/components/social/LoginToActModal";
 import ReportProfileDialog from "@/components/social/ReportProfileDialog";
+import { useSEO } from "@/hooks/useSEO";
 
 interface ProfileFull {
   id: string;
