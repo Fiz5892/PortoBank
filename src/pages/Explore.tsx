@@ -31,7 +31,7 @@ const Explore = () => {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [query, profession, location]);
+  }, [debouncedQuery, profession, location]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,8 +47,8 @@ const Explore = () => {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (query.trim()) {
-        const q = `%${query.trim()}%`;
+      if (debouncedQuery.trim()) {
+        const q = `%${debouncedQuery.trim()}%`;
         req = req.or(`full_name.ilike.${q},username.ilike.${q},profession.ilike.${q}`);
       }
       if (profession) req = req.eq("profession", profession);
@@ -63,12 +63,11 @@ const Explore = () => {
       setProfiles((data as ProfileCardData[]) ?? []);
       setTotal(count ?? 0);
     };
-    const t = setTimeout(run, 200);
+    run();
     return () => {
       cancelled = true;
-      clearTimeout(t);
     };
-  }, [query, profession, location, page]);
+  }, [debouncedQuery, profession, location, page]);
 
   // Filter pill options (load distinct values)
   const [professions, setProfessions] = useState<string[]>([]);
