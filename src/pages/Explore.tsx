@@ -179,15 +179,29 @@ const Explore = () => {
             ))}
           </div>
         ) : profiles.length === 0 ? (
-          <div className="text-center py-20 max-w-md mx-auto">
-            <div className="h-20 w-20 mx-auto rounded-full bg-secondary flex items-center justify-center mb-4">
-              <Search className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-heading text-lg font-semibold">No profiles found</h3>
-            <p className="text-muted-foreground text-sm mt-2">
-              Try adjusting your search or filters to find more talents.
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No profiles found"
+            description="Try adjusting your search or filters, or be the first to publish a portfolio in this area."
+            action={
+              hasFilters ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuery("");
+                    setProfession(null);
+                    setLocation(null);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" /> Clear filters
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link to="/register">Create your portfolio</Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
