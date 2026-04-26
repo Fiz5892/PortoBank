@@ -6,22 +6,32 @@ import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
+import EmptyState from "@/components/layout/EmptyState";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useSEO } from "@/hooks/useSEO";
+import { Link } from "react-router-dom";
 
 const PAGE_SIZE = 12;
 
 const Explore = () => {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 300);
   const [profession, setProfession] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<ProfileCardData[] | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
 
+  useSEO({
+    title: "Explore Talents — PortoBank",
+    description: "Discover portfolios from designers, developers, writers, and creators across every profession.",
+  });
+
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [query, profession, location]);
+  }, [debouncedQuery, profession, location]);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,8 +47,8 @@ const Explore = () => {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (query.trim()) {
-        const q = `%${query.trim()}%`;
+      if (debouncedQuery.trim()) {
+        const q = `%${debouncedQuery.trim()}%`;
         req = req.or(`full_name.ilike.${q},username.ilike.${q},profession.ilike.${q}`);
       }
       if (profession) req = req.eq("profession", profession);
@@ -53,12 +63,11 @@ const Explore = () => {
       setProfiles((data as ProfileCardData[]) ?? []);
       setTotal(count ?? 0);
     };
-    const t = setTimeout(run, 200);
+    run();
     return () => {
       cancelled = true;
-      clearTimeout(t);
     };
-  }, [query, profession, location, page]);
+  }, [debouncedQuery, profession, location, page]);
 
   // Filter pill options (load distinct values)
   const [professions, setProfessions] = useState<string[]>([]);
@@ -170,15 +179,29 @@ const Explore = () => {
             ))}
           </div>
         ) : profiles.length === 0 ? (
-          <div className="text-center py-20 max-w-md mx-auto">
-            <div className="h-20 w-20 mx-auto rounded-full bg-secondary flex items-center justify-center mb-4">
-              <Search className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-heading text-lg font-semibold">No profiles found</h3>
-            <p className="text-muted-foreground text-sm mt-2">
-              Try adjusting your search or filters to find more talents.
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No profiles found"
+            description="Try adjusting your search or filters, or be the first to publish a portfolio in this area."
+            action={
+              hasFilters ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuery("");
+                    setProfession(null);
+                    setLocation(null);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" /> Clear filters
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link to="/register">Create your portfolio</Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

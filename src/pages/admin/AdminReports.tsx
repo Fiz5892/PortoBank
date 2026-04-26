@@ -8,8 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, Flag, ShieldCheck } from "lucide-react";
+import EmptyState from "@/components/layout/EmptyState";
 import { format } from "date-fns";
 
 interface ReportRow {
@@ -97,44 +109,71 @@ const AdminReports = () => {
         <CardContent className="p-4 md:p-6">
           {loading ? (
             <div className="py-12 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              icon={ShieldCheck}
+              title="No pending reports"
+              description="All clear — there are no user reports to review right now."
+            />
           ) : (
-            <div className="rounded-md border border-border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Reporter</TableHead>
-                    <TableHead>Target</TableHead>
-                    <TableHead className="hidden md:table-cell">Reason</TableHead>
-                    <TableHead className="hidden md:table-cell">Submitted</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r) => (
-                    <TableRow key={r.id} className="cursor-pointer" onClick={() => setActive(r)}>
-                      <TableCell className="text-sm">{r.reporter_name}</TableCell>
-                      <TableCell className="text-sm font-medium">{r.target_name}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground truncate max-w-xs">
-                        {r.reason}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {format(new Date(r.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant(r.status)} className="capitalize">{r.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {rows.length === 0 && (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block rounded-md border border-border overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
-                        No reports.
-                      </TableCell>
+                      <TableHead>Reporter</TableHead>
+                      <TableHead>Target</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r) => (
+                      <TableRow key={r.id} className="cursor-pointer" onClick={() => setActive(r)}>
+                        <TableCell className="text-sm">{r.reporter_name}</TableCell>
+                        <TableCell className="text-sm font-medium">{r.target_name}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground truncate max-w-xs">
+                          {r.reason}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {format(new Date(r.created_at), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant(r.status)} className="capitalize">{r.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile card list */}
+              <ul className="md:hidden space-y-3">
+                {rows.map((r) => (
+                  <li
+                    key={r.id}
+                    className="border border-border rounded-md p-4 bg-card cursor-pointer hover:bg-secondary/40 transition-colors"
+                    onClick={() => setActive(r)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{r.target_name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Reported by {r.reporter_name}
+                        </p>
+                      </div>
+                      <Badge variant={statusVariant(r.status)} className="capitalize shrink-0">{r.status}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{r.reason}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {format(new Date(r.created_at), "MMM d, yyyy")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
@@ -181,7 +220,29 @@ const AdminReports = () => {
                   <div className="grid grid-cols-1 gap-2 pt-4 border-t border-border">
                     <Button onClick={() => updateStatus(active, "resolved")}>Mark Resolved</Button>
                     <Button variant="outline" onClick={() => updateStatus(active, "dismissed")}>Dismiss Report</Button>
-                    <Button variant="destructive" onClick={() => suspendTarget(active)}>Suspend Reported User</Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Suspend Reported User</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Suspend {active.target_name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will hide their profile from search and prevent them from logging in. The
+                            report will also be marked as resolved. You can re-activate them later.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => suspendTarget(active)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, suspend user
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
               </div>

@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles, Rocket, Search as SearchIcon } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
+import { useSEO } from "@/hooks/useSEO";
 import heroImage from "@/assets/hero-portobank.jpg";
 
 const useCounter = (target: number, duration = 1500) => {
@@ -39,6 +40,12 @@ const StatItem = ({ value, label }: { value: number; label: string }) => {
 const Index = () => {
   const [featured, setFeatured] = useState<ProfileCardData[] | null>(null);
   const [stats, setStats] = useState({ users: 0, portfolios: 0, professions: 0 });
+
+  useSEO({
+    title: "PortoBank — Your Portfolio, Your Identity",
+    description:
+      "Build a beautiful professional portfolio in minutes. Showcase your work, get discovered, and connect with opportunities — for every profession.",
+  });
 
   useEffect(() => {
     const load = async () => {

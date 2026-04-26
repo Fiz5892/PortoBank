@@ -105,7 +105,7 @@ const AdminUsers = () => {
           {loading ? (
             <div className="py-12 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : (
-            <div className="rounded-md border border-border overflow-x-auto">
+            <div className="hidden md:block rounded-md border border-border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -158,7 +158,27 @@ const AdminUsers = () => {
                                 </DropdownMenuItem>
                               )}
                               {r.is_active ? (
-                                <DropdownMenuItem onClick={() => setActive(r, false)}>Suspend</DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                      Suspend
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Suspend {r.full_name || "this user"}?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        They will be hidden from search and unable to sign in. You can re-activate them later.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => setActive(r, false)}>
+                                        Suspend
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               ) : (
                                 <DropdownMenuItem onClick={() => setActive(r, true)}>Activate</DropdownMenuItem>
                               )}
@@ -198,6 +218,41 @@ const AdminUsers = () => {
                 </TableBody>
               </Table>
             </div>
+          )}
+
+          {/* Mobile card list */}
+          {!loading && (
+            <ul className="md:hidden space-y-3">
+              {filtered.length === 0 ? (
+                <li className="text-center text-sm text-muted-foreground py-8">No users found.</li>
+              ) : (
+                filtered.map((r) => {
+                  const initials = (r.full_name || "U").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <li key={r.id} className="border border-border rounded-md p-3 bg-card flex items-center gap-3">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        {r.avatar_url && <AvatarImage src={r.avatar_url} alt={r.full_name ?? ""} />}
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{r.full_name || "Unnamed"}</p>
+                        <p className="text-xs text-muted-foreground truncate">@{r.username ?? "—"}</p>
+                        <Badge variant={r.is_active ? "default" : "destructive"} className="mt-1 text-[10px] py-0">
+                          {r.is_active ? "Active" : "Suspended"}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActive(r, !r.is_active)}
+                      >
+                        {r.is_active ? "Suspend" : "Activate"}
+                      </Button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
           )}
         </CardContent>
       </Card>

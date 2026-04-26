@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MobileBottomTabs from "@/components/dashboard/MobileBottomTabs";
 
 interface DashboardProfile {
   id: string;
@@ -181,8 +182,12 @@ const DashboardLayout = ({ children }: Props) => {
           </div>
         </header>
 
-        <main className="flex-1 px-4 md:px-8 py-6 md:py-8">{children}</main>
+        <main className="flex-1 px-4 md:px-8 py-6 md:py-8 has-bottom-tabs md:!pb-8">
+          {children}
+        </main>
       </div>
+
+      <MobileBottomTabs unread={unread} />
     </div>
   );
 };

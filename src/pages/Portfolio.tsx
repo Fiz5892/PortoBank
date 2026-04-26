@@ -37,6 +37,7 @@ import { downloadCV } from "@/lib/cv-pdf";
 import LikeButton from "@/components/social/LikeButton";
 import LoginToActModal from "@/components/social/LoginToActModal";
 import ReportProfileDialog from "@/components/social/ReportProfileDialog";
+import { useSEO } from "@/hooks/useSEO";
 
 interface ProfileFull {
   id: string;
@@ -71,6 +72,19 @@ const Portfolio = () => {
   const [msg, setMsg] = useState({ subject: "", body: "" });
   const [msgErrors, setMsgErrors] = useState<Partial<Record<keyof typeof msg, string>>>({});
   const [sending, setSending] = useState(false);
+
+  // SEO — runs every render with whatever profile data is available
+  const seoName = profile?.full_name || profile?.username || username || "Portfolio";
+  useSEO({
+    title: profile ? `${seoName} — Portfolio on PortoBank` : "Portfolio — PortoBank",
+    description:
+      profile?.bio ||
+      (profile?.profession
+        ? `${seoName} — ${profile.profession} on PortoBank.`
+        : "Discover this professional portfolio on PortoBank."),
+    image: profile?.avatar_url || undefined,
+    type: "profile",
+  });
 
   useEffect(() => {
     if (!username) return;
@@ -226,7 +240,7 @@ const Portfolio = () => {
     );
   }
 
-  const displayName = profile.full_name || profile.username || "Anonymous";
+  const displayName = seoName;
   const initials = displayName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
   const isOwnProfile = user?.id === profile.user_id;
 

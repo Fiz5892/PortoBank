@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, ScrollText } from "lucide-react";
+import EmptyState from "@/components/layout/EmptyState";
 import { format } from "date-fns";
 
 interface LogRow {
@@ -87,40 +88,61 @@ const AdminLogs = () => {
 
           {loading ? (
             <div className="py-12 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon={ScrollText}
+              title={rows.length === 0 ? "No recent activity" : "No entries match your filters"}
+              description={
+                rows.length === 0
+                  ? "Admin actions will appear here as they happen."
+                  : "Try widening the date range or clearing the action filter."
+              }
+            />
           ) : (
-            <div className="rounded-md border border-border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Admin</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead className="hidden md:table-cell">Target type</TableHead>
-                    <TableHead className="hidden lg:table-cell">Target ID</TableHead>
-                    <TableHead>When</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-sm">{r.admin_name}</TableCell>
-                      <TableCell className="text-sm font-medium">{r.action}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{r.target_type ?? "—"}</TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono truncate max-w-[200px]">{r.target_id ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(r.created_at), "MMM d, yyyy HH:mm")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block rounded-md border border-border overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
-                        No log entries match your filters.
-                      </TableCell>
+                      <TableHead>Admin</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Target type</TableHead>
+                      <TableHead className="hidden lg:table-cell">Target ID</TableHead>
+                      <TableHead>When</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-sm">{r.admin_name}</TableCell>
+                        <TableCell className="text-sm font-medium">{r.action}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{r.target_type ?? "—"}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono truncate max-w-[200px]">{r.target_id ?? "—"}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(r.created_at), "MMM d, yyyy HH:mm")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile card list */}
+              <ul className="md:hidden space-y-2">
+                {filtered.map((r) => (
+                  <li key={r.id} className="border border-border rounded-md p-3 bg-card">
+                    <p className="text-sm font-medium">{r.action}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {r.admin_name} · {r.target_type ?? "—"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {format(new Date(r.created_at), "MMM d, yyyy HH:mm")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
