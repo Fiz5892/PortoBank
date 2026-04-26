@@ -17,7 +17,9 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, MailPlus, Reply, Search } from "lucide-react";
+import { Loader2, MailPlus, Reply, Search, Inbox as InboxIcon } from "lucide-react";
+import EmptyState from "@/components/layout/EmptyState";
+import { useSEO } from "@/hooks/useSEO";
 import { cn } from "@/lib/utils";
 
 interface MessageRow {
@@ -56,6 +58,7 @@ const formatTime = (iso: string) => {
 
 const Inbox = () => {
   const { user } = useAuth();
+  useSEO({ title: "Inbox — PortoBank", description: "Read and reply to messages from people who reached out." });
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [senders, setSenders] = useState<Record<string, SenderInfo>>({});
   const [selected, setSelected] = useState<MessageRow | null>(null);
@@ -202,7 +205,17 @@ const Inbox = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground text-sm">No messages yet.</div>
+              <EmptyState
+                icon={InboxIcon}
+                title="No messages yet"
+                description="When someone reaches out from your portfolio, their message will land here."
+                action={
+                  <Button onClick={() => setNewOpen(true)}>
+                    <MailPlus className="mr-2 h-4 w-4" /> Compose a message
+                  </Button>
+                }
+                className="py-8"
+              />
             ) : (
               <ul className="flex flex-col">
                 {messages.map((m) => {
