@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ExternalLink, Flag, ShieldCheck } from "lucide-react";
 import EmptyState from "@/components/layout/EmptyState";
@@ -209,7 +220,29 @@ const AdminReports = () => {
                   <div className="grid grid-cols-1 gap-2 pt-4 border-t border-border">
                     <Button onClick={() => updateStatus(active, "resolved")}>Mark Resolved</Button>
                     <Button variant="outline" onClick={() => updateStatus(active, "dismissed")}>Dismiss Report</Button>
-                    <Button variant="destructive" onClick={() => suspendTarget(active)}>Suspend Reported User</Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Suspend Reported User</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Suspend {active.target_name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will hide their profile from search and prevent them from logging in. The
+                            report will also be marked as resolved. You can re-activate them later.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => suspendTarget(active)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, suspend user
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
               </div>
