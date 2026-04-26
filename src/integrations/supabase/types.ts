@@ -41,6 +41,93 @@ export type Database = {
         }
         Relationships: []
       }
+      educations: {
+        Row: {
+          created_at: string
+          degree: string
+          description: string | null
+          end_year: number | null
+          field_of_study: string | null
+          gpa: string | null
+          id: string
+          institution_logo_url: string | null
+          institution_name: string
+          start_year: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          degree: string
+          description?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          gpa?: string | null
+          id?: string
+          institution_logo_url?: string | null
+          institution_name: string
+          start_year?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string
+          description?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          gpa?: string | null
+          id?: string
+          institution_logo_url?: string | null
+          institution_name?: string
+          start_year?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      experiences: {
+        Row: {
+          company_logo_url: string | null
+          company_name: string
+          created_at: string
+          description: string | null
+          employment_type: string | null
+          end_date: string | null
+          id: string
+          is_current: boolean
+          job_title: string
+          location: string | null
+          start_date: string | null
+          user_id: string
+        }
+        Insert: {
+          company_logo_url?: string | null
+          company_name: string
+          created_at?: string
+          description?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          job_title: string
+          location?: string | null
+          start_date?: string | null
+          user_id: string
+        }
+        Update: {
+          company_logo_url?: string | null
+          company_name?: string
+          created_at?: string
+          description?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          job_title?: string
+          location?: string | null
+          start_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -106,6 +193,7 @@ export type Database = {
           created_at: string
           description: string | null
           external_link: string | null
+          gallery_images: string[] | null
           id: string
           portfolio_id: string
           tags: string[] | null
@@ -117,6 +205,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           external_link?: string | null
+          gallery_images?: string[] | null
           id?: string
           portfolio_id: string
           tags?: string[] | null
@@ -128,6 +217,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           external_link?: string | null
+          gallery_images?: string[] | null
           id?: string
           portfolio_id?: string
           tags?: string[] | null
@@ -177,45 +267,72 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          behance_url: string | null
           bio: string | null
           created_at: string
+          dribbble_url: string | null
+          email_contact: string | null
           full_name: string | null
+          github_url: string | null
           id: string
+          instagram_url: string | null
           is_active: boolean
           is_public: boolean
+          linkedin_url: string | null
           location: string | null
+          phone: string | null
           profession: string | null
           role: string
+          twitter_url: string | null
           user_id: string
           username: string | null
+          website_url: string | null
         }
         Insert: {
           avatar_url?: string | null
+          behance_url?: string | null
           bio?: string | null
           created_at?: string
+          dribbble_url?: string | null
+          email_contact?: string | null
           full_name?: string | null
+          github_url?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean
           is_public?: boolean
+          linkedin_url?: string | null
           location?: string | null
+          phone?: string | null
           profession?: string | null
           role?: string
+          twitter_url?: string | null
           user_id: string
           username?: string | null
+          website_url?: string | null
         }
         Update: {
           avatar_url?: string | null
+          behance_url?: string | null
           bio?: string | null
           created_at?: string
+          dribbble_url?: string | null
+          email_contact?: string | null
           full_name?: string | null
+          github_url?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean
           is_public?: boolean
+          linkedin_url?: string | null
           location?: string | null
+          phone?: string | null
           profession?: string | null
           role?: string
+          twitter_url?: string | null
           user_id?: string
           username?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }

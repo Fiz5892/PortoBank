@@ -11,6 +11,7 @@ export interface PortfolioItemData {
   cover_url: string | null;
   external_link: string | null;
   tags: string[] | null;
+  gallery_images?: string[] | null;
 }
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
 const ProjectModal = ({ item, onOpenChange }: Props) => {
   return (
     <Dialog open={!!item} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         {item && (
           <>
             {item.cover_url && (
@@ -41,6 +42,7 @@ const ProjectModal = ({ item, onOpenChange }: Props) => {
                 </DialogDescription>
               )}
             </DialogHeader>
+
             {item.tags && item.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {item.tags.map((t) => (
@@ -48,10 +50,26 @@ const ProjectModal = ({ item, onOpenChange }: Props) => {
                 ))}
               </div>
             )}
+
+            {item.gallery_images && item.gallery_images.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {item.gallery_images.map((src, i) => (
+                  <div key={i} className="aspect-video bg-secondary rounded-md overflow-hidden">
+                    <img
+                      src={src}
+                      alt={`${item.title} screenshot ${i + 1}`}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {item.external_link && (
               <Button asChild className="mt-4 w-full sm:w-auto">
                 <a href={item.external_link} target="_blank" rel="noopener noreferrer">
-                  Visit project <ExternalLink className="ml-2 h-4 w-4" />
+                  View Project <ExternalLink className="ml-2 h-4 w-4" />
                 </a>
               </Button>
             )}
