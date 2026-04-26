@@ -231,6 +231,10 @@ const Portfolio = () => {
   const initials = displayName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
   const isOwnProfile = user?.id === profile.user_id;
 
+  // SEO + Open Graph for the public portfolio page
+  // Note: useSEO must be called unconditionally — this branch is reached after
+  // we've verified profile exists, but the hook is invoked from the same render path.
+
   return (
     <Layout>
       <section className="container py-10 md:py-14">
