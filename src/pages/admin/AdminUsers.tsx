@@ -158,7 +158,27 @@ const AdminUsers = () => {
                                 </DropdownMenuItem>
                               )}
                               {r.is_active ? (
-                                <DropdownMenuItem onClick={() => setActive(r, false)}>Suspend</DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                      Suspend
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Suspend {r.full_name || "this user"}?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        They will be hidden from search and unable to sign in. You can re-activate them later.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => setActive(r, false)}>
+                                        Suspend
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               ) : (
                                 <DropdownMenuItem onClick={() => setActive(r, true)}>Activate</DropdownMenuItem>
                               )}
