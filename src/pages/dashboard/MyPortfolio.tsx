@@ -39,8 +39,11 @@ import {
   EyeOff,
   Globe,
   ExternalLink,
+  Briefcase,
 } from "lucide-react";
 import TagInput from "@/components/onboarding/TagInput";
+import EmptyState from "@/components/layout/EmptyState";
+import { useSEO } from "@/hooks/useSEO";
 import { fetchCVDataByUserId } from "@/lib/cv-data";
 import { downloadCV } from "@/lib/cv-pdf";
 
@@ -75,6 +78,7 @@ const emptyForm: ItemForm = {
 
 const MyPortfolio = () => {
   const { user } = useAuth();
+  useSEO({ title: "My Portfolio — PortoBank", description: "Manage your projects, certificates, and articles." });
   const [profileId, setProfileId] = useState<string | null>(null);
   const [portfolioId, setPortfolioId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
@@ -316,9 +320,17 @@ const MyPortfolio = () => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : items.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <p>No items yet — add your first project.</p>
-            </div>
+            <EmptyState
+              icon={Briefcase}
+              title="No items added yet"
+              description="Add your first project, certificate, or article to start building your portfolio."
+              action={
+                <Button onClick={openCreate} disabled={!portfolioId}>
+                  <Plus className="mr-2 h-4 w-4" /> Add your first item
+                </Button>
+              }
+              className="py-8"
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((item) => (
