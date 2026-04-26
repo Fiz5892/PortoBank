@@ -170,7 +170,23 @@ const AdminPortfolios = () => {
                               </DropdownMenuItem>
                             )}
                             {r.is_published && (
-                              <DropdownMenuItem onClick={() => hide(r)}>Hide</DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Hide</DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Hide this portfolio?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      "{r.title}" will be removed from public discovery. The owner can republish it later.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => hide(r)}>Hide</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             )}
                             <DropdownMenuSeparator />
                             <AlertDialog>
