@@ -18,11 +18,8 @@ const ProjectsSection = ({ items, isOwner, onView }: Props) => {
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-heading font-semibold text-lg">Projects</h2>
         {isOwner && (
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-            <Link to="/dashboard/portfolio">
-              <SectionEditButton onClick={() => {}} label="Manage projects" />
-              Manage
-            </Link>
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground h-7">
+            <Link to="/dashboard/portfolio">Manage</Link>
           </Button>
         )}
       </div>
