@@ -73,6 +73,19 @@ const Portfolio = () => {
   const [msgErrors, setMsgErrors] = useState<Partial<Record<keyof typeof msg, string>>>({});
   const [sending, setSending] = useState(false);
 
+  // SEO — runs every render with whatever profile data is available
+  const seoName = profile?.full_name || profile?.username || username || "Portfolio";
+  useSEO({
+    title: profile ? `${seoName} — Portfolio on PortoBank` : "Portfolio — PortoBank",
+    description:
+      profile?.bio ||
+      (profile?.profession
+        ? `${seoName} — ${profile.profession} on PortoBank.`
+        : "Discover this professional portfolio on PortoBank."),
+    image: profile?.avatar_url || undefined,
+    type: "profile",
+  });
+
   useEffect(() => {
     if (!username) return;
     const load = async () => {
