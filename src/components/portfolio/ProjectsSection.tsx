@@ -3,7 +3,6 @@ import { ExternalLink, Folder } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import SectionEditButton from "./SectionEditButton";
 import type { PortfolioItemData } from "./ProjectModal";
 
 interface Props {
