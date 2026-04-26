@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const schema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -21,6 +22,11 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  useSEO({
+    title: "Sign in — PortoBank",
+    description: "Sign in to your PortoBank account to manage your portfolio.",
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

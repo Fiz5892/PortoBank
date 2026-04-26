@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const schema = z
   .object({
@@ -29,6 +30,11 @@ const Register = () => {
   const [form, setForm] = useState({ full_name: "", email: "", password: "", confirm: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  useSEO({
+    title: "Create account — PortoBank",
+    description: "Create your free PortoBank account and build a professional portfolio in minutes.",
+  });
 
   // Redirect if already logged in
   useEffect(() => {
