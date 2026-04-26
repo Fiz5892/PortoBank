@@ -38,9 +38,18 @@ const EditContactDialog = ({ open, onOpenChange, userId, initial, onSaved }: Pro
 
   const save = async () => {
     setSaving(true);
-    const payload = Object.fromEntries(
-      Object.entries(form).map(([k, v]) => [k, (v as string | null)?.toString().trim() || null])
-    );
+    const clean = (v: string | null) => (v ?? "").toString().trim() || null;
+    const payload: ProfileContacts = {
+      email_contact: clean(form.email_contact),
+      phone: clean(form.phone),
+      website_url: clean(form.website_url),
+      linkedin_url: clean(form.linkedin_url),
+      github_url: clean(form.github_url),
+      instagram_url: clean(form.instagram_url),
+      twitter_url: clean(form.twitter_url),
+      behance_url: clean(form.behance_url),
+      dribbble_url: clean(form.dribbble_url),
+    };
     const { error } = await supabase.from("profiles").update(payload).eq("user_id", userId);
     setSaving(false);
     if (error) {
@@ -48,7 +57,7 @@ const EditContactDialog = ({ open, onOpenChange, userId, initial, onSaved }: Pro
       return;
     }
     toast.success("Contact info updated");
-    onSaved(payload as ProfileContacts);
+    onSaved(payload);
     onOpenChange(false);
   };
 
