@@ -6,7 +6,11 @@ import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
+import EmptyState from "@/components/layout/EmptyState";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useSEO } from "@/hooks/useSEO";
+import { Link } from "react-router-dom";
 
 const PAGE_SIZE = 12;
 
