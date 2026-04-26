@@ -16,11 +16,17 @@ const PAGE_SIZE = 12;
 
 const Explore = () => {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 300);
   const [profession, setProfession] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<ProfileCardData[] | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+
+  useSEO({
+    title: "Explore Talents — PortoBank",
+    description: "Discover portfolios from designers, developers, writers, and creators across every profession.",
+  });
 
   // Reset page when filters change
   useEffect(() => {
