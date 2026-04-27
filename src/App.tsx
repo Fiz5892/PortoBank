@@ -1,10 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import PageTransition from "@/components/layout/PageTransition";
 import Index from "./pages/Index.tsx";
 import Explore from "./pages/Explore.tsx";
 import Login from "./pages/Login.tsx";
@@ -28,36 +26,36 @@ import NotFound from "./pages/NotFound.tsx";
 const queryClient = new QueryClient();
 
 const AnimatedRoutes = () => {
-  const location = useLocation();
+  // Routes are NOT wrapped in AnimatePresence/PageTransition here on purpose:
+  // wrapping <Routes> with a keyed transition unmounts every layout (including
+  // <DashboardLayout> and its auth hook) on each navigation, which caused
+  // dashboard pages to redirect back to home. Page-level transitions can be
+  // added inside individual page components if desired.
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <PageTransition key={location.pathname}>
-        <Routes location={location}>
-          <Route path="/" element={<Index />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Overview />} />
-          <Route path="/dashboard/portfolio" element={<MyPortfolio />} />
-          <Route path="/dashboard/profile" element={<EditProfile />} />
-          <Route path="/dashboard/inbox" element={<Inbox />} />
-          <Route path="/dashboard/settings" element={<DashboardSettings />} />
-          {/* Admin */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/portfolios" element={<AdminPortfolios />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          <Route path="/admin/categories" element={<AdminCategories />} />
-          <Route path="/admin/logs" element={<AdminLogs />} />
-          {/* Public portfolio by username — keep as last meaningful route before catch-all */}
-          <Route path="/:username" element={<Portfolio />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </PageTransition>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/explore" element={<Explore />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/dashboard" element={<Overview />} />
+      <Route path="/dashboard/portfolio" element={<MyPortfolio />} />
+      <Route path="/dashboard/profile" element={<EditProfile />} />
+      <Route path="/dashboard/inbox" element={<Inbox />} />
+      <Route path="/dashboard/settings" element={<DashboardSettings />} />
+      {/* Admin */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/users" element={<AdminUsers />} />
+      <Route path="/admin/portfolios" element={<AdminPortfolios />} />
+      <Route path="/admin/reports" element={<AdminReports />} />
+      <Route path="/admin/categories" element={<AdminCategories />} />
+      <Route path="/admin/logs" element={<AdminLogs />} />
+      {/* Public portfolio by username — keep as last meaningful route before catch-all */}
+      <Route path="/:username" element={<Portfolio />} />
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 

@@ -1,20 +1,22 @@
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
 
 interface Props {
   children: ReactNode;
 }
 
 /**
- * Simple fade page transition. Keyed by route so it re-runs on navigation.
- * Wrap any top-level page content with this for a subtle entrance.
+ * Subtle fade/slide entrance for a route's content.
+ *
+ * IMPORTANT: This component must be rendered INSIDE each route's element,
+ * not wrapped around <Routes>. Wrapping <Routes> with a single keyed
+ * PageTransition causes the whole router subtree (including layouts and
+ * their useState/useEffect hooks) to unmount and remount on every
+ * navigation, which is why dashboard pages were "kicked back to home".
  */
 const PageTransition = ({ children }: Props) => {
-  const location = useLocation();
   return (
     <motion.div
-      key={location.pathname}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
