@@ -28,6 +28,8 @@ import {
   Lock,
   Eye,
   Pencil,
+  Send,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,11 +41,12 @@ import LoginToActModal from "@/components/social/LoginToActModal";
 import ReportProfileDialog from "@/components/social/ReportProfileDialog";
 import { useSEO } from "@/hooks/useSEO";
 
-import SkillsSidebar, { SkillRow } from "@/components/portfolio/SkillsSidebar";
 import ContactSidebar, { ProfileContacts } from "@/components/portfolio/ContactSidebar";
 import ExperienceSection, { ExperienceRow } from "@/components/portfolio/ExperienceSection";
 import EducationSection, { EducationRow } from "@/components/portfolio/EducationSection";
+import ExpertiseSection, { SkillRow } from "@/components/portfolio/ExpertiseSection";
 import ProjectsSection from "@/components/portfolio/ProjectsSection";
+import ContactCTASection from "@/components/portfolio/ContactCTASection";
 import EditProfileInfoDialog from "@/components/portfolio/EditProfileInfoDialog";
 import EditSkillsDialog from "@/components/portfolio/EditSkillsDialog";
 import EditContactDialog from "@/components/portfolio/EditContactDialog";
@@ -73,6 +76,16 @@ const formatViews = (n: number) => {
   return `${(n / 1_000_000).toFixed(1)}M`;
 };
 
+// Smooth-scroll anchor used in the in-page nav pill
+const NavAnchor = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <a
+    href={href}
+    className="px-3 py-1.5 text-sm text-foreground/70 hover:text-foreground transition-colors rounded-full"
+  >
+    {children}
+  </a>
+);
+
 const Portfolio = () => {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
@@ -90,7 +103,6 @@ const Portfolio = () => {
   const [openItem, setOpenItem] = useState<PortfolioItemData | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [bioExpanded, setBioExpanded] = useState(false);
 
   // Edit dialogs
   const [editProfile, setEditProfile] = useState(false);
@@ -122,7 +134,6 @@ const Portfolio = () => {
     const baseSelect =
       "id, user_id, username, full_name, bio, avatar_url, location, profession, is_public, email_contact, phone, website_url, linkedin_url, github_url, instagram_url, twitter_url, behance_url, dribbble_url";
 
-    // Try by username first (without is_public filter so we can show "private" page)
     let { data: rows } = await supabase
       .from("profiles")
       .select(baseSelect)
@@ -186,7 +197,6 @@ const Portfolio = () => {
       setItems([]);
     }
 
-    // Increment view count once per session for non-owner viewers
     if (
       !viewedRef.current &&
       profileRow.user_id !== user?.id &&
@@ -244,6 +254,10 @@ const Portfolio = () => {
     }
   };
 
+  const scrollToContact = () => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
@@ -292,9 +306,7 @@ const Portfolio = () => {
       <Layout>
         <section className="container py-24 text-center max-w-md mx-auto">
           <h1 className="font-heading text-2xl font-bold">Profile not found</h1>
-          <p className="text-muted-foreground mt-2">
-            This profile doesn't exist.
-          </p>
+          <p className="text-muted-foreground mt-2">This profile doesn't exist.</p>
           <Button asChild className="mt-6">
             <Link to="/explore">Explore other talents</Link>
           </Button>
@@ -340,8 +352,12 @@ const Portfolio = () => {
   }
 
   const displayName = seoName;
-  const initials = displayName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-  const longBio = (profile.bio?.length ?? 0) > 220;
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   const contacts: ProfileContacts = {
     email_contact: profile.email_contact,
@@ -354,6 +370,8 @@ const Portfolio = () => {
     behance_url: profile.behance_url,
     dribbble_url: profile.dribbble_url,
   };
+
+  const canMessage = !!user && !isOwnProfile;
 
   return (
     <Layout>
@@ -372,63 +390,61 @@ const Portfolio = () => {
         </div>
       )}
 
-      {/* HERO */}
-      <section className="border-b bg-gradient-to-b from-secondary/40 to-background">
-        <div className="container py-10 md:py-14">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-            <div className="shrink-0 flex md:block justify-center">
-              <Avatar className="h-[120px] w-[120px] ring-4 ring-background shadow-elevated">
-                {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={displayName} />}
-                <AvatarFallback className="text-3xl bg-primary/10 text-primary font-heading font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+      {/* In-page anchor nav (pill, sticky-ish at top of hero) */}
+      <div className="container pt-6">
+        <nav
+          aria-label="Sections"
+          className="hidden md:flex items-center justify-center gap-1 mx-auto w-fit rounded-full border bg-card/70 backdrop-blur px-2 py-1 shadow-subtle"
+        >
+          <NavAnchor href="#hero">Home</NavAnchor>
+          <NavAnchor href="#experience">Experiences</NavAnchor>
+          <NavAnchor href="#education">Education</NavAnchor>
+          <NavAnchor href="#expertise">Expertise</NavAnchor>
+          <NavAnchor href="#projects">Projects</NavAnchor>
+          <NavAnchor href="#contact">Contact</NavAnchor>
+        </nav>
+      </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h1 className="font-heading text-3xl md:text-4xl font-bold leading-tight">
-                    {displayName}
-                  </h1>
-                  {profile.username && (
-                    <p className="text-muted-foreground text-sm mt-0.5">@{profile.username}</p>
-                  )}
-                  {profile.profession && (
-                    <p className="text-primary font-medium mt-2">{profile.profession}</p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                    {profile.location && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" /> {profile.location}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <Eye className="h-3.5 w-3.5" /> {formatViews(viewCount)} views
-                    </span>
-                  </div>
-                </div>
-              </div>
-
+      {/* HERO — left text, right photo */}
+      <section
+        id="hero"
+        className="relative overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-dot-grid opacity-60"
+        />
+        <div className="container pt-10 md:pt-14 pb-16 md:pb-24">
+          <div className="grid gap-10 md:grid-cols-12 items-center">
+            {/* LEFT — text */}
+            <div className="md:col-span-7 order-2 md:order-1">
+              <p className="text-sm text-muted-foreground">Hello, it's me</p>
+              <h1 className="font-heading text-5xl md:text-6xl font-extrabold leading-[1.05] mt-2">
+                {displayName}
+              </h1>
+              {profile.profession && (
+                <p className="font-heading text-xl md:text-2xl font-bold mt-4">
+                  {profile.profession}
+                </p>
+              )}
               {profile.bio && (
-                <div className="mt-4 max-w-3xl">
-                  <p className={`text-foreground/80 ${!bioExpanded && longBio ? "line-clamp-3" : ""}`}>
-                    {profile.bio}
-                  </p>
-                  {longBio && (
-                    <button
-                      type="button"
-                      className="text-primary text-sm font-medium mt-1 hover:underline"
-                      onClick={() => setBioExpanded((v) => !v)}
-                    >
-                      {bioExpanded ? "Show less" : "Show more"}
-                    </button>
-                  )}
-                </div>
+                <p className="text-muted-foreground mt-4 max-w-xl whitespace-pre-wrap">
+                  {profile.bio}
+                </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 mt-5">
-                <Button onClick={handleDownloadCV} disabled={downloadingCV}>
+              <div className="flex flex-wrap items-center gap-2 mt-7">
+                {!isOwnProfile && (
+                  <Button onClick={scrollToContact} size="lg">
+                    <Send className="h-4 w-4 mr-2" /> Let's Connect
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleDownloadCV}
+                  disabled={downloadingCV}
+                >
                   {downloadingCV ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
@@ -436,34 +452,52 @@ const Portfolio = () => {
                   )}
                   Download CV
                 </Button>
-                {!isOwnProfile && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      const el = document.getElementById("contact");
-                      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                  >
-                    <Mail className="h-4 w-4 mr-2" /> Send Message
+                {isOwnProfile && (
+                  <Button variant="outline" size="lg" onClick={() => setEditProfile(true)}>
+                    <Pencil className="h-4 w-4 mr-2" /> Edit profile
                   </Button>
                 )}
+              </div>
+
+              {/* Meta row */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-6 text-sm text-muted-foreground">
+                {profile.username && <span>@{profile.username}</span>}
+                {profile.location && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" /> {profile.location}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5" /> {formatViews(viewCount)} views
+                </span>
                 <LikeButton
                   ownerUserId={profile.user_id}
                   portfolioId={portfolioId ?? undefined}
-                  size="default"
-                  variant="outline"
+                  size="sm"
+                  variant="ghost"
                 />
-                <Button variant="outline" size="icon" onClick={handleShare} aria-label="Share profile">
-                  <Share2 className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShare}
+                  aria-label="Share profile"
+                  className="h-8 px-2"
+                >
+                  <Share2 className="h-3.5 w-3.5 mr-1.5" /> Share
                 </Button>
                 {!isOwnProfile && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="More actions">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="More actions"
+                        className="h-8 px-2"
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="start">
                       <DropdownMenuItem
                         onClick={() => {
                           if (!user) {
@@ -479,62 +513,92 @@ const Portfolio = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
-                {isOwnProfile && (
-                  <Button variant="ghost" size="sm" onClick={() => setEditProfile(true)}>
-                    <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
-                  </Button>
-                )}
+              </div>
+            </div>
+
+            {/* RIGHT — avatar */}
+            <div className="md:col-span-5 order-1 md:order-2 flex justify-center md:justify-end">
+              <div className="relative">
+                <div
+                  aria-hidden="true"
+                  className="absolute -inset-6 rounded-full bg-gradient-to-tr from-primary/15 via-transparent to-primary/10 blur-2xl"
+                />
+                <Avatar className="relative h-56 w-56 md:h-72 md:w-72 ring-4 ring-background shadow-elevated">
+                  {profile.avatar_url && (
+                    <AvatarImage src={profile.avatar_url} alt={displayName} />
+                  )}
+                  <AvatarFallback className="text-6xl bg-primary/10 text-primary font-heading font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MAIN GRID */}
-      <section className="container py-10">
-        <div className="grid gap-6 md:gap-8 md:grid-cols-10">
-          {/* Sidebar */}
-          <aside className="md:col-span-3 space-y-6 md:sticky md:top-20 md:self-start">
-            <SkillsSidebar
-              skills={skills}
-              isOwner={isOwnProfile}
-              onEdit={() => setEditSkills(true)}
-            />
-            <ContactSidebar
-              contacts={contacts}
-              isOwner={isOwnProfile}
-              onEdit={() => setEditContact(true)}
-            />
-          </aside>
+      {/* EXPERIENCE */}
+      <ExperienceSection
+        experiences={experiences}
+        isOwner={isOwnProfile}
+        onEdit={() => setEditExp(true)}
+      />
 
-          {/* Main column */}
-          <div className="md:col-span-7 space-y-6">
-            <Card className="p-6 shadow-subtle" id="about">
-              <h2 className="font-heading font-semibold text-lg mb-3">About Me</h2>
-              <p className="text-foreground/80 whitespace-pre-wrap">
-                {profile.bio || "This user hasn't added a description yet"}
-              </p>
-            </Card>
+      {/* EDUCATION */}
+      <EducationSection
+        educations={educations}
+        isOwner={isOwnProfile}
+        onEdit={() => setEditEdu(true)}
+      />
 
-            <ExperienceSection
-              experiences={experiences}
-              isOwner={isOwnProfile}
-              onEdit={() => setEditExp(true)}
-            />
+      {/* EXPERTISE (Skills as grid) */}
+      <ExpertiseSection
+        skills={skills}
+        isOwner={isOwnProfile}
+        onEdit={() => setEditSkills(true)}
+      />
 
-            <EducationSection
-              educations={educations}
-              isOwner={isOwnProfile}
-              onEdit={() => setEditEdu(true)}
-            />
+      {/* PROJECTS — horizontal carousel */}
+      <ProjectsSection items={items} isOwner={isOwnProfile} onView={setOpenItem} />
 
-            <ProjectsSection items={items} isOwner={isOwnProfile} onView={setOpenItem} />
+      {/* CONTACT CTA */}
+      <ContactCTASection
+        displayName={displayName}
+        canMessage={canMessage}
+        onMessage={() => {
+          if (!user) {
+            setShowLoginModal(true);
+            return;
+          }
+          scrollToContact();
+        }}
+      />
 
-            {/* Contact / message form */}
-            <Card className="p-6 shadow-subtle" id="contact">
+      {/* CONTACT — message form + contact card */}
+      <section id="contact" className="container py-16 md:py-24 border-t">
+        <div className="grid gap-10 md:grid-cols-12">
+          <div className="md:col-span-5">
+            <h2 className="font-heading text-3xl md:text-4xl font-extrabold leading-tight text-gradient-brand">
+              Get in touch
+            </h2>
+            <p className="text-muted-foreground mt-3 max-w-sm">
+              Have a question or proposal? Send a message — {displayName.split(" ")[0]} will get
+              back to you.
+            </p>
+            <div className="mt-6">
+              <ContactSidebar
+                contacts={contacts}
+                isOwner={isOwnProfile}
+                onEdit={() => setEditContact(true)}
+              />
+            </div>
+          </div>
+
+          <div className="md:col-span-7">
+            <Card className="p-6 md:p-8 shadow-subtle">
               <div className="flex items-center gap-2 mb-4">
                 <Mail className="h-4 w-4 text-primary" />
-                <h2 className="font-heading font-semibold text-lg">Send a message</h2>
+                <h3 className="font-heading font-semibold text-lg">Send a message</h3>
               </div>
 
               {!user ? (
@@ -549,7 +613,7 @@ const Portfolio = () => {
               ) : isOwnProfile ? (
                 <p className="text-sm text-muted-foreground">This is your own profile.</p>
               ) : (
-                <form onSubmit={handleSendMessage} className="space-y-4 max-w-xl">
+                <form onSubmit={handleSendMessage} className="space-y-4">
                   <div>
                     <Label htmlFor="m-subject">Subject</Label>
                     <Input
@@ -579,7 +643,7 @@ const Portfolio = () => {
                   </div>
                   <Button type="submit" disabled={sending}>
                     {sending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Send message
+                    Send message <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </form>
               )}
