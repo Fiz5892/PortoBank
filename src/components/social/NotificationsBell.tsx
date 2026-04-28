@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, Mail } from "lucide-react";
+import { MessageSquare, Heart, Mail } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   DropdownMenu,
@@ -182,9 +182,9 @@ const NotificationsBell = () => {
       <DropdownMenuTrigger asChild>
         <button
           className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring"
-          aria-label="Notifications"
+          aria-label="Messages and notifications"
         >
-          <Bell className="h-5 w-5 text-foreground" />
+          <MessageSquare className="h-5 w-5 text-foreground" />
           {unreadMessages > 0 && (
             <Badge
               variant="default"

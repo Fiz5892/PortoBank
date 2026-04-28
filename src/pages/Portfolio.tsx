@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import Layout from "@/components/layout/Layout";
+import Footer from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import {
   Pencil,
   Send,
   ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,6 +85,22 @@ const NavAnchor = ({ href, children }: { href: string; children: React.ReactNode
   >
     {children}
   </a>
+);
+
+// Custom shell for the public portfolio page — no global Navbar (to avoid double nav).
+// A floating back arrow returns to the landing page.
+const PortfolioShell = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col bg-background">
+    <Link
+      to="/"
+      aria-label="Back to home"
+      className="fixed top-4 left-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur shadow-sm hover:bg-secondary transition-colors"
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </Link>
+    <main className="flex-1 flex flex-col">{children}</main>
+    <Footer />
+  </div>
 );
 
 const Portfolio = () => {
@@ -303,7 +320,7 @@ const Portfolio = () => {
 
   if (notFound) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-24 text-center max-w-md mx-auto">
           <h1 className="font-heading text-2xl font-bold">Profile not found</h1>
           <p className="text-muted-foreground mt-2">This profile doesn't exist.</p>
@@ -311,13 +328,13 @@ const Portfolio = () => {
             <Link to="/explore">Explore other talents</Link>
           </Button>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
   if (isPrivate) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-24 text-center max-w-md mx-auto">
           <div className="mx-auto h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
             <Lock className="h-7 w-7 text-muted-foreground" />
@@ -330,13 +347,13 @@ const Portfolio = () => {
             <Link to="/explore">Explore other talents</Link>
           </Button>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
   if (!profile) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-12">
           <div className="flex items-start gap-6">
             <Skeleton className="h-24 w-24 rounded-full" />
@@ -347,7 +364,7 @@ const Portfolio = () => {
             </div>
           </div>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
@@ -374,7 +391,7 @@ const Portfolio = () => {
   const canMessage = !!user && !isOwnProfile;
 
   return (
-    <Layout>
+    <PortfolioShell>
       {/* Owner banner */}
       {isOwnProfile && (
         <div className="bg-primary/5 border-b border-primary/10">
@@ -732,7 +749,7 @@ const Portfolio = () => {
           />
         </>
       )}
-    </Layout>
+    </PortfolioShell>
   );
 };
 
