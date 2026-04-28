@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
-import TagInput from "@/components/onboarding/TagInput";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SKILL_PRESETS } from "@/lib/skill-presets";
 import type { SkillRow } from "./SkillsSidebar";
 
 interface Props {
@@ -15,42 +25,156 @@ interface Props {
   onSaved: (updated: SkillRow[]) => void;
 }
 
+// Build a stable key for selection: "<Category>::<Skill>"
+const k = (cat: string, name: string) => `${cat}::${name}`;
+
 const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: Props) => {
-  const [skills, setSkills] = useState<string[]>([]);
+  // Set of selected "Category::Skill" keys
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
+  // Map of preset skill name => its category (for reverse lookup)
+  const presetSkillToCategory = useMemo(() => {
+    const m = new Map<string, string>();
+    SKILL_PRESETS.forEach((g) => g.skills.forEach((s) => m.set(s.toLowerCase(), g.category)));
+    return m;
+  }, []);
+
   useEffect(() => {
-    if (open) setSkills(initial.map((s) => s.name));
-  }, [open, initial]);
+    if (!open) return;
+    // Hydrate from existing skills. Match by name (case-insensitive) to a preset
+    // category; if it doesn't match, place it under its stored category or "Other".
+    const next = new Set<string>();
+    initial.forEach((s) => {
+      const presetCat = presetSkillToCategory.get(s.name.toLowerCase());
+      const cat = presetCat || s.category || "Other";
+      next.add(k(cat, s.name));
+    });
+    setSelected(next);
+  }, [open, initial, presetSkillToCategory]);
+
+  const toggle = (cat: string, name: string) => {
+    const key = k(cat, name);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const selectedCount = selected.size;
 
   const save = async () => {
     setSaving(true);
-    const original = initial.map((s) => s.name);
-    const removed = original.filter((s) => !skills.includes(s));
-    const added = skills.filter((s) => !original.includes(s));
-    if (removed.length > 0) {
-      await supabase.from("skills").delete().eq("profile_id", profileId).in("name", removed);
+    // Replace strategy: delete all then insert all selected. Simpler & avoids drift.
+    const rows: SkillRow[] = Array.from(selected).map((key) => {
+      const [category, name] = key.split("::");
+      return { name, category };
+    });
+
+    const { error: delErr } = await supabase.from("skills").delete().eq("profile_id", profileId);
+    if (delErr) {
+      setSaving(false);
+      toast.error("Could not update skills");
+      return;
     }
-    if (added.length > 0) {
-      await supabase
+    if (rows.length > 0) {
+      const { error: insErr } = await supabase
         .from("skills")
-        .insert(added.map((name) => ({ profile_id: profileId, name })));
+        .insert(rows.map((r) => ({ profile_id: profileId, name: r.name, category: r.category })));
+      if (insErr) {
+        setSaving(false);
+        toast.error("Could not save skills");
+        return;
+      }
     }
     setSaving(false);
     toast.success("Skills updated");
-    onSaved(skills.map((name) => ({ name, category: initial.find((s) => s.name === name)?.category ?? null })));
+    onSaved(rows);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit skills</DialogTitle>
+          <DialogTitle>Edit your expertise</DialogTitle>
+          <DialogDescription>
+            Pick the skills that best describe you. They'll appear grouped by category on your
+            public portfolio.
+          </DialogDescription>
         </DialogHeader>
-        <TagInput value={skills} onChange={setSkills} max={20} placeholder="Add a skill and press Enter" />
+
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {selectedCount} selected
+          </span>
+          {selectedCount > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setSelected(new Set())}
+            >
+              Clear all
+            </Button>
+          )}
+        </div>
+
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-6 pb-4">
+            {SKILL_PRESETS.map((group) => {
+              const groupSelected = group.skills.filter((s) =>
+                selected.has(k(group.category, s)),
+              ).length;
+              return (
+                <section key={group.category}>
+                  <div className="flex items-baseline justify-between gap-3 mb-2">
+                    <div>
+                      <h3 className="font-heading font-semibold text-sm">{group.category}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>
+                    </div>
+                    {groupSelected > 0 && (
+                      <Badge variant="secondary" className="font-normal shrink-0">
+                        {groupSelected}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {group.skills.map((skill) => {
+                      const key = k(group.category, skill);
+                      const checked = selected.has(key);
+                      return (
+                        <label
+                          key={skill}
+                          className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer transition-colors text-sm ${
+                            checked
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-secondary"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggle(group.category, skill)}
+                            aria-label={skill}
+                          />
+                          <span className="truncate">{skill}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </ScrollArea>
+
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
           <Button onClick={save} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save
