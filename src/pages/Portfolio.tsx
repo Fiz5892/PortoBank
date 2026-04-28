@@ -87,6 +87,22 @@ const NavAnchor = ({ href, children }: { href: string; children: React.ReactNode
   </a>
 );
 
+// Custom shell for the public portfolio page — no global Navbar (to avoid double nav).
+// A floating back arrow returns to the landing page.
+const PortfolioShell = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col bg-background">
+    <Link
+      to="/"
+      aria-label="Back to home"
+      className="fixed top-4 left-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur shadow-sm hover:bg-secondary transition-colors"
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </Link>
+    <main className="flex-1 flex flex-col">{children}</main>
+    <Footer />
+  </div>
+);
+
 const Portfolio = () => {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
