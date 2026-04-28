@@ -320,7 +320,7 @@ const Portfolio = () => {
 
   if (notFound) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-24 text-center max-w-md mx-auto">
           <h1 className="font-heading text-2xl font-bold">Profile not found</h1>
           <p className="text-muted-foreground mt-2">This profile doesn't exist.</p>
@@ -328,13 +328,13 @@ const Portfolio = () => {
             <Link to="/explore">Explore other talents</Link>
           </Button>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
   if (isPrivate) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-24 text-center max-w-md mx-auto">
           <div className="mx-auto h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
             <Lock className="h-7 w-7 text-muted-foreground" />
@@ -347,13 +347,13 @@ const Portfolio = () => {
             <Link to="/explore">Explore other talents</Link>
           </Button>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
   if (!profile) {
     return (
-      <Layout>
+      <PortfolioShell>
         <section className="container py-12">
           <div className="flex items-start gap-6">
             <Skeleton className="h-24 w-24 rounded-full" />
@@ -364,7 +364,7 @@ const Portfolio = () => {
             </div>
           </div>
         </section>
-      </Layout>
+      </PortfolioShell>
     );
   }
 
@@ -391,7 +391,7 @@ const Portfolio = () => {
   const canMessage = !!user && !isOwnProfile;
 
   return (
-    <Layout>
+    <PortfolioShell>
       {/* Owner banner */}
       {isOwnProfile && (
         <div className="bg-primary/5 border-b border-primary/10">
@@ -749,7 +749,7 @@ const Portfolio = () => {
           />
         </>
       )}
-    </Layout>
+    </PortfolioShell>
   );
 };
 
