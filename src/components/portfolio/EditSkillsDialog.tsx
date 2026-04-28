@@ -10,8 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SKILL_PRESETS } from "@/lib/skill-presets";
@@ -32,6 +33,7 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
   // Set of selected "Category::Skill" keys
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
 
   // Map of preset skill name => its category (for reverse lookup)
   const presetSkillToCategory = useMemo(() => {
@@ -106,10 +108,18 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
           </DialogDescription>
         </DialogHeader>
 
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search skills or category…"
+            className="pl-9"
+          />
+        </div>
+
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {selectedCount} selected
-          </span>
+          <span className="text-muted-foreground">{selectedCount} selected</span>
           {selectedCount > 0 && (
             <Button
               type="button"
@@ -126,6 +136,14 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="space-y-6 pb-4">
             {SKILL_PRESETS.map((group) => {
+              const q = query.trim().toLowerCase();
+              const matchesCategory = q && group.category.toLowerCase().includes(q);
+              const visibleSkills = !q
+                ? group.skills
+                : matchesCategory
+                  ? group.skills
+                  : group.skills.filter((s) => s.toLowerCase().includes(q));
+              if (visibleSkills.length === 0) return null;
               const groupSelected = group.skills.filter((s) =>
                 selected.has(k(group.category, s)),
               ).length;
@@ -143,7 +161,7 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
                     )}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {group.skills.map((skill) => {
+                    {visibleSkills.map((skill) => {
                       const key = k(group.category, skill);
                       const checked = selected.has(key);
                       return (
