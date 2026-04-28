@@ -33,6 +33,7 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
   // Set of selected "Category::Skill" keys
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
 
   // Map of preset skill name => its category (for reverse lookup)
   const presetSkillToCategory = useMemo(() => {
