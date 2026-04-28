@@ -161,7 +161,7 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
                     )}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {group.skills.map((skill) => {
+                    {visibleSkills.map((skill) => {
                       const key = k(group.category, skill);
                       const checked = selected.has(key);
                       return (
