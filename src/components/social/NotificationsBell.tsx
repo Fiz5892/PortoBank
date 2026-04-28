@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageSquare, Heart, Mail } from "lucide-react";
+import { Bell, Heart, Mail } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   DropdownMenu,
@@ -182,9 +182,9 @@ const NotificationsBell = () => {
       <DropdownMenuTrigger asChild>
         <button
           className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring"
-          aria-label="Messages and notifications"
+          aria-label="Notifications"
         >
-          <MessageSquare className="h-5 w-5 text-foreground" />
+          <Bell className="h-5 w-5 text-foreground" />
           {unreadMessages > 0 && (
             <Badge
               variant="default"
@@ -248,7 +248,7 @@ const NotificationsBell = () => {
           )}
         </div>
 
-        <div className="px-4 py-2 border-t border-border flex items-center justify-between">
+        <div className="px-4 py-2 border-t border-border flex items-center justify-end">
           <Button
             variant="ghost"
             size="sm"
@@ -257,11 +257,6 @@ const NotificationsBell = () => {
             disabled={unreadMessages === 0}
           >
             Mark all as read
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
-            <Link to="/dashboard/inbox" onClick={() => setOpen(false)}>
-              View inbox
-            </Link>
           </Button>
         </div>
       </DropdownMenuContent>
