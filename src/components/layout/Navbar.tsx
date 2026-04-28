@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationsBell from "@/components/social/NotificationsBell";
+import MessagesIcon from "@/components/social/MessagesIcon";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -90,6 +91,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
+              <MessagesIcon />
               <NotificationsBell />
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
