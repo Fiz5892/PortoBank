@@ -1,16 +1,10 @@
-import { Document, Page, Text, View, StyleSheet, Font, pdf } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer";
 
-Font.register({
-  family: "Inter",
-  fonts: [
-    { src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff", fontWeight: 400 },
-    { src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff", fontWeight: 600 },
-    { src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMa1pL7SUc.woff", fontWeight: 700 },
-  ],
-});
+// Use built-in Helvetica to avoid runtime font fetch failures.
+
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: "Inter", fontSize: 10, color: "#1a2238" },
+  page: { padding: 40, fontFamily: "Helvetica", fontSize: 10, color: "#1a2238" },
   header: { borderBottomWidth: 2, borderBottomColor: "#1D6FE8", paddingBottom: 12, marginBottom: 18 },
   name: { fontSize: 22, fontWeight: 700, color: "#0F4FB8" },
   profession: { fontSize: 12, fontWeight: 600, color: "#1D6FE8", marginTop: 2 },
