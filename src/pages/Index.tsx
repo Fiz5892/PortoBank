@@ -70,9 +70,9 @@ const Index = () => {
       const uniqueProfs = new Set((profs ?? []).map((r) => r.profession).filter(Boolean));
 
       setStats({
-        users: Math.max(u ?? 0, 1200),
-        portfolios: Math.max(p ?? 0, 850),
-        professions: Math.max(uniqueProfs.size, 40),
+        users: u ?? 0,
+        portfolios: p ?? 0,
+        professions: uniqueProfs.size,
       });
     };
     load();
