@@ -54,18 +54,20 @@ const Index = () => {
         .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)")
         .eq("is_public", true)
         .eq("is_active", true)
+        .neq("role", "admin")
         .order("created_at", { ascending: false })
         .limit(6);
       setFeatured((profiles as ProfileCardData[]) ?? []);
 
       const [{ count: u }, { count: p }] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_active", true).neq("role", "admin"),
         supabase.from("portfolios").select("*", { count: "exact", head: true }).eq("is_published", true),
       ]);
 
       const { data: profs } = await supabase
         .from("profiles")
         .select("profession")
+        .neq("role", "admin")
         .not("profession", "is", null);
       const uniqueProfs = new Set((profs ?? []).map((r) => r.profession).filter(Boolean));
 
