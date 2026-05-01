@@ -6,6 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   LayoutDashboard,
   Briefcase,
   UserCog,
@@ -15,9 +23,11 @@ import {
   Loader2,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MobileBottomTabs from "@/components/dashboard/MobileBottomTabs";
+import { toast } from "sonner";
 
 interface DashboardProfile {
   id: string;
@@ -82,8 +92,13 @@ const DashboardLayout = ({ children }: Props) => {
     { to: "/dashboard/portfolio", label: "My Portfolio", icon: Briefcase, end: false },
     { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: false },
     { to: "/dashboard/inbox", label: "Inbox", icon: Inbox, end: false, badge: unread },
-    { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
   ];
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate("/");
+  };
 
   const sidebar = (
     <nav className="flex flex-col gap-1 p-4">
