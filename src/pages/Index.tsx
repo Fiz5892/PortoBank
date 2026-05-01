@@ -30,7 +30,7 @@ const StatItem = ({ value, label }: { value: number; label: string }) => {
   return (
     <div className="text-center">
       <div className="font-heading text-3xl md:text-4xl font-bold text-primary">
-        {animated.toLocaleString()}+
+        {animated.toLocaleString()}
       </div>
       <div className="text-sm text-muted-foreground mt-1">{label}</div>
     </div>
