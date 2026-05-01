@@ -256,7 +256,8 @@ const Portfolio = () => {
     if (!profile) return;
     setDownloadingCV(true);
     try {
-      const data = await fetchCVDataByUserId(profile.user_id);
+      const ownerEmail = user && user.id === profile.user_id ? user.email : null;
+      const data = await fetchCVDataByUserId(profile.user_id, ownerEmail);
       if (!data) {
         toast.error("Could not load CV data");
         return;

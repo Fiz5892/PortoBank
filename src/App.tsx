@@ -22,6 +22,7 @@ import AdminReports from "./pages/admin/AdminReports.tsx";
 import AdminCategories from "./pages/admin/AdminCategories.tsx";
 import AdminLogs from "./pages/admin/AdminLogs.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import ScrollToTop from "./components/layout/ScrollToTop.tsx";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AnimatedRoutes />
       </BrowserRouter>
     </TooltipProvider>

@@ -30,7 +30,7 @@ const StatItem = ({ value, label }: { value: number; label: string }) => {
   return (
     <div className="text-center">
       <div className="font-heading text-3xl md:text-4xl font-bold text-primary">
-        {animated.toLocaleString()}+
+        {animated.toLocaleString()}
       </div>
       <div className="text-sm text-muted-foreground mt-1">{label}</div>
     </div>
@@ -54,25 +54,27 @@ const Index = () => {
         .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)")
         .eq("is_public", true)
         .eq("is_active", true)
+        .neq("role", "admin")
         .order("created_at", { ascending: false })
         .limit(6);
       setFeatured((profiles as ProfileCardData[]) ?? []);
 
       const [{ count: u }, { count: p }] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_active", true).neq("role", "admin"),
         supabase.from("portfolios").select("*", { count: "exact", head: true }).eq("is_published", true),
       ]);
 
       const { data: profs } = await supabase
         .from("profiles")
         .select("profession")
+        .neq("role", "admin")
         .not("profession", "is", null);
       const uniqueProfs = new Set((profs ?? []).map((r) => r.profession).filter(Boolean));
 
       setStats({
-        users: Math.max(u ?? 0, 1200),
-        portfolios: Math.max(p ?? 0, 850),
-        professions: Math.max(uniqueProfs.size, 40),
+        users: u ?? 0,
+        portfolios: p ?? 0,
+        professions: uniqueProfs.size,
       });
     };
     load();

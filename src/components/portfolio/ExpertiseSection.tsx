@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import SectionEditButton from "./SectionEditButton";
 import { SKILL_PRESETS } from "@/lib/skill-presets";
+import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 
 export interface SkillRow {
@@ -15,9 +16,9 @@ interface Props {
 }
 
 const ExpertiseSection = ({ skills, isOwner, onEdit }: Props) => {
-  // Group selected skills by category, then enrich with preset metadata (icon + description).
-  const cards = useMemo(() => {
-    const groups = skills.reduce<Record<string, SkillRow[]>>((acc, s) => {
+  // Group selected skills by category, then enrich with preset metadata (icon).
+  const groups = useMemo(() => {
+    const map = skills.reduce<Record<string, SkillRow[]>>((acc, s) => {
       const key = s.category?.trim() || "Other Skills";
       (acc[key] = acc[key] || []).push(s);
       return acc;
@@ -26,7 +27,7 @@ const ExpertiseSection = ({ skills, isOwner, onEdit }: Props) => {
     const presetByName = new Map(SKILL_PRESETS.map((p) => [p.category, p]));
     const presetOrder = SKILL_PRESETS.map((g) => g.category);
 
-    return Object.keys(groups)
+    return Object.keys(map)
       .sort((a, b) => {
         const ai = presetOrder.indexOf(a);
         const bi = presetOrder.indexOf(b);
@@ -35,27 +36,23 @@ const ExpertiseSection = ({ skills, isOwner, onEdit }: Props) => {
         if (bi !== -1) return 1;
         return a.localeCompare(b);
       })
-      .map((cat) => {
-        const preset = presetByName.get(cat);
-        return {
-          category: cat,
-          icon: preset?.icon ?? Sparkles,
-          description:
-            preset?.description ??
-            "A set of skills I bring to the table to help projects move forward.",
-          skills: groups[cat],
-        };
-      });
+      .map((cat) => ({
+        category: cat,
+        icon: presetByName.get(cat)?.icon ?? Sparkles,
+        skills: map[cat],
+      }));
   }, [skills]);
 
   return (
-    <section id="expertise" className="border-t bg-secondary/40 relative overflow-hidden">
-      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-dot-grid opacity-50" />
+    <section id="expertise" className="border-t bg-secondary/40">
       <div className="container py-16 md:py-24">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10 md:mb-14">
           <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            Expertise that drives success
+            Expertise
           </p>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold mt-3">
+            Skills & areas I specialize in
+          </h2>
           {isOwner && (
             <div className="mt-4 flex justify-center">
               <SectionEditButton onClick={onEdit} label="Edit skills" />
@@ -63,7 +60,7 @@ const ExpertiseSection = ({ skills, isOwner, onEdit }: Props) => {
           )}
         </div>
 
-        {cards.length === 0 ? (
+        {groups.length === 0 ? (
           <div className="max-w-md mx-auto text-center text-sm text-muted-foreground border border-dashed rounded-lg p-8 bg-card">
             {isOwner ? (
               <>
@@ -81,27 +78,32 @@ const ExpertiseSection = ({ skills, isOwner, onEdit }: Props) => {
             )}
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-l border-t border-border/60 bg-card/40">
-            {cards.map(({ category, icon: Icon, description, skills: catSkills }) => (
+          <div className="max-w-4xl mx-auto space-y-6">
+            {groups.map(({ category, icon: Icon, skills: catSkills }) => (
               <div
                 key={category}
-                className="group p-8 border-r border-b border-border/60 text-center flex flex-col items-center transition-colors hover:bg-background"
+                className="rounded-xl border border-border bg-card p-5 md:p-6 shadow-subtle"
               >
-                <div className="h-12 w-12 rounded-xl bg-foreground text-background flex items-center justify-center shadow-subtle">
-                  <Icon className="h-5 w-5" />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="font-heading font-semibold text-base md:text-lg">
+                    {category}
+                  </h3>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {catSkills.length} {catSkills.length === 1 ? "skill" : "skills"}
+                  </span>
                 </div>
-                <h3 className="font-heading text-lg font-semibold mt-5">{category}</h3>
-                <p className="text-sm text-muted-foreground mt-3 leading-relaxed max-w-xs">
-                  {description}
-                </p>
-                <div className="flex flex-wrap justify-center gap-1.5 mt-5">
+                <div className="flex flex-wrap gap-2">
                   {catSkills.map((s) => (
-                    <span
+                    <Badge
                       key={`${category}-${s.name}`}
-                      className="inline-flex items-center rounded-full border bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                      variant="secondary"
+                      className="rounded-full px-3 py-1 text-xs font-medium"
                     >
                       {s.name}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>

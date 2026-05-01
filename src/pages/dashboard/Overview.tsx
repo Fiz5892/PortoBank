@@ -10,9 +10,6 @@ import {
   Heart,
   MessageSquare,
   FolderOpen,
-  Plus,
-  UserCog,
-  Share2,
   Copy,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -108,24 +105,6 @@ const Overview = () => {
           ))}
         </div>
 
-        <Card className="p-6 shadow-subtle">
-          <h2 className="font-heading font-semibold mb-4">Quick actions</h2>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/dashboard/portfolio">
-                <Plus className="mr-2 h-4 w-4" /> Add Project
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/dashboard/profile">
-                <UserCog className="mr-2 h-4 w-4" /> Edit Profile
-              </Link>
-            </Button>
-            <Button variant="outline" onClick={copyUrl} disabled={!publicUrl}>
-              <Share2 className="mr-2 h-4 w-4" /> Share Portfolio
-            </Button>
-          </div>
-        </Card>
 
         {publicUrl && (
           <Card className="p-6 shadow-subtle">

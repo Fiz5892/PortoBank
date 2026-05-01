@@ -44,6 +44,7 @@ const Explore = () => {
         })
         .eq("is_public", true)
         .eq("is_active", true)
+        .neq("role", "admin")
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
@@ -78,7 +79,8 @@ const Explore = () => {
         .from("profiles")
         .select("profession, location")
         .eq("is_public", true)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .neq("role", "admin");
       const profs = new Set<string>();
       const locs = new Set<string>();
       (data ?? []).forEach((r) => {
