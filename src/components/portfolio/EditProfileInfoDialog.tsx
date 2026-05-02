@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
+import ImageCropDialog from "./ImageCropDialog";
 
 interface ProfileForm {
   full_name: string;
@@ -30,20 +31,32 @@ const EditProfileInfoDialog = ({ open, onOpenChange, userId, initial, onSaved }:
   const [form, setForm] = useState<ProfileForm>(initial);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
 
   useEffect(() => {
     if (open) setForm(initial);
   }, [open, initial]);
 
-  const handleAvatar = async (file: File) => {
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2MB");
+  const handleAvatarPick = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadCroppedAvatar = async (blob: Blob) => {
     setUploading(true);
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `${userId}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const path = `${userId}/avatar-${Date.now()}.jpg`;
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
     if (error) {
       toast.error("Upload failed");
       setUploading(false);
@@ -52,6 +65,7 @@ const EditProfileInfoDialog = ({ open, onOpenChange, userId, initial, onSaved }:
     const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
     setForm((f) => ({ ...f, avatar_url: pub.publicUrl }));
     setUploading(false);
+    toast.success("Photo updated");
   };
 
   const save = async () => {
