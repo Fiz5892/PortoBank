@@ -267,6 +267,13 @@ const EditProfile = () => {
           </div>
         </Card>
       </div>
+
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        imageSrc={cropSrc}
+        onCropped={uploadCroppedAvatar}
+      />
     </DashboardLayout>
   );
 };
