@@ -22,6 +22,7 @@ import AdminReports from "./pages/admin/AdminReports.tsx";
 import AdminCategories from "./pages/admin/AdminCategories.tsx";
 import AdminLogs from "./pages/admin/AdminLogs.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Suspended from "./pages/Suspended.tsx";
 import ScrollToTop from "./components/layout/ScrollToTop.tsx";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const AnimatedRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/suspended" element={<Suspended />} />
       <Route path="/dashboard" element={<Overview />} />
       <Route path="/dashboard/portfolio" element={<MyPortfolio />} />
       <Route path="/dashboard/profile" element={<EditProfile />} />

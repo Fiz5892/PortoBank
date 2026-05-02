@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
 import TagInput from "@/components/onboarding/TagInput";
+import ImageCropDialog from "@/components/portfolio/ImageCropDialog";
 
 interface ProfileForm {
   id: string;
@@ -30,6 +31,8 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -61,16 +64,26 @@ const EditProfile = () => {
     load();
   }, [user]);
 
-  const handleAvatar = async (file: File) => {
-    if (!user) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2MB");
+  const handleAvatarPick = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadCroppedAvatar = async (blob: Blob) => {
+    if (!user) return;
     setUploading(true);
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const path = `${user.id}/avatar-${Date.now()}.jpg`;
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
     if (error) {
       toast.error("Upload failed");
       setUploading(false);
@@ -79,6 +92,7 @@ const EditProfile = () => {
     const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
     setForm((f) => (f ? { ...f, avatar_url: pub.publicUrl } : f));
     setUploading(false);
+    toast.success("Photo updated");
   };
 
   const save = async () => {
@@ -179,7 +193,8 @@ const EditProfile = () => {
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) handleAvatar(f);
+                  if (f) handleAvatarPick(f);
+                  e.target.value = "";
                 }}
               />
             </label>
@@ -252,6 +267,13 @@ const EditProfile = () => {
           </div>
         </Card>
       </div>
+
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        imageSrc={cropSrc}
+        onCropped={uploadCroppedAvatar}
+      />
     </DashboardLayout>
   );
 };
