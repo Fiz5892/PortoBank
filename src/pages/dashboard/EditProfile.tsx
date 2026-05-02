@@ -193,7 +193,8 @@ const EditProfile = () => {
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) handleAvatar(f);
+                  if (f) handleAvatarPick(f);
+                  e.target.value = "";
                 }}
               />
             </label>
