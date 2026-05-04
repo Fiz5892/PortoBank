@@ -118,7 +118,7 @@ const NotificationsBell = () => {
           key: `msg-${m.id}`,
           kind: "message" as const,
           title: `New message from ${name}`,
-          subtitle: m.subject || m.body.slice(0, 60),
+          subtitle: m.deleted_for_everyone ? "Message deleted" : "Tap to open conversation",
           createdAt: m.created_at,
           href: "/dashboard/inbox",
           unread: !m.is_read,
