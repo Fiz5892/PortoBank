@@ -630,19 +630,6 @@ const Portfolio = () => {
               ) : (
                 <form onSubmit={handleSendMessage} className="space-y-4">
                   <div>
-                    <Label htmlFor="m-subject">Subject</Label>
-                    <Input
-                      id="m-subject"
-                      value={msg.subject}
-                      onChange={(e) => setMsg({ ...msg, subject: e.target.value })}
-                      placeholder="Project collaboration"
-                      className="mt-1.5"
-                    />
-                    {msgErrors.subject && (
-                      <p className="text-xs text-destructive mt-1">{msgErrors.subject}</p>
-                    )}
-                  </div>
-                  <div>
                     <Label htmlFor="m-body">Message</Label>
                     <Textarea
                       id="m-body"
