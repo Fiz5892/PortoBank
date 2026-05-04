@@ -127,7 +127,7 @@ const Portfolio = () => {
   const [editExp, setEditExp] = useState(false);
   const [editEdu, setEditEdu] = useState(false);
 
-  const [msg, setMsg] = useState({ subject: "", body: "" });
+  const [msg, setMsg] = useState({ body: "" });
   const [msgErrors, setMsgErrors] = useState<Partial<Record<keyof typeof msg, string>>>({});
   const [sending, setSending] = useState(false);
 
