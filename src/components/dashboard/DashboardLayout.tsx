@@ -212,13 +212,8 @@ const DashboardLayout = ({ children }: Props) => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile">
-                      <UserCog className="mr-2 h-4 w-4" /> Edit profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/settings">
-                      <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+                    <Link to="/">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Home
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
