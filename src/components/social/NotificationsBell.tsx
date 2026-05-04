@@ -50,7 +50,7 @@ const NotificationsBell = () => {
       // Recent messages (5)
       const { data: msgs } = await supabase
         .from("messages")
-        .select("id, sender_id, subject, body, is_read, created_at")
+        .select("id, sender_id, body, is_read, created_at, deleted_for_everyone")
         .eq("receiver_id", user.id)
         .order("created_at", { ascending: false })
         .limit(5);
