@@ -298,11 +298,9 @@ const Portfolio = () => {
     }
     setMsgErrors({});
     setSending(true);
-    const { error } = await supabase.from("messages").insert({
-      sender_id: user.id,
-      receiver_id: profile.user_id,
-      subject: parsed.data.subject,
-      body: parsed.data.body,
+    const { error } = await supabase.rpc("send_message", {
+      p_receiver_id: profile.user_id,
+      p_body: parsed.data.body,
     });
     setSending(false);
     if (error) {
@@ -310,7 +308,7 @@ const Portfolio = () => {
       return;
     }
     toast.success("Message sent!");
-    setMsg({ subject: "", body: "" });
+    setMsg({ body: "" });
   };
 
   const isOwnProfile = useMemo(
