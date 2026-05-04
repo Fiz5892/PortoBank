@@ -67,7 +67,6 @@ interface ProfileFull extends ProfileContacts {
 }
 
 const messageSchema = z.object({
-  subject: z.string().trim().min(1, "Subject is required").max(150),
   body: z.string().trim().min(1, "Message is required").max(2000),
 });
 
