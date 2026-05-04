@@ -67,7 +67,6 @@ interface ProfileFull extends ProfileContacts {
 }
 
 const messageSchema = z.object({
-  subject: z.string().trim().min(1, "Subject is required").max(150),
   body: z.string().trim().min(1, "Message is required").max(2000),
 });
 
@@ -128,7 +127,7 @@ const Portfolio = () => {
   const [editExp, setEditExp] = useState(false);
   const [editEdu, setEditEdu] = useState(false);
 
-  const [msg, setMsg] = useState({ subject: "", body: "" });
+  const [msg, setMsg] = useState({ body: "" });
   const [msgErrors, setMsgErrors] = useState<Partial<Record<keyof typeof msg, string>>>({});
   const [sending, setSending] = useState(false);
 
@@ -299,11 +298,9 @@ const Portfolio = () => {
     }
     setMsgErrors({});
     setSending(true);
-    const { error } = await supabase.from("messages").insert({
-      sender_id: user.id,
-      receiver_id: profile.user_id,
-      subject: parsed.data.subject,
-      body: parsed.data.body,
+    const { error } = await supabase.rpc("send_message", {
+      p_receiver_id: profile.user_id,
+      p_body: parsed.data.body,
     });
     setSending(false);
     if (error) {
@@ -311,7 +308,7 @@ const Portfolio = () => {
       return;
     }
     toast.success("Message sent!");
-    setMsg({ subject: "", body: "" });
+    setMsg({ body: "" });
   };
 
   const isOwnProfile = useMemo(
@@ -632,19 +629,6 @@ const Portfolio = () => {
                 <p className="text-sm text-muted-foreground">This is your own profile.</p>
               ) : (
                 <form onSubmit={handleSendMessage} className="space-y-4">
-                  <div>
-                    <Label htmlFor="m-subject">Subject</Label>
-                    <Input
-                      id="m-subject"
-                      value={msg.subject}
-                      onChange={(e) => setMsg({ ...msg, subject: e.target.value })}
-                      placeholder="Project collaboration"
-                      className="mt-1.5"
-                    />
-                    {msgErrors.subject && (
-                      <p className="text-xs text-destructive mt-1">{msgErrors.subject}</p>
-                    )}
-                  </div>
                   <div>
                     <Label htmlFor="m-body">Message</Label>
                     <Textarea

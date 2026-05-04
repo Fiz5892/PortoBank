@@ -161,29 +161,35 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          deleted_for_everyone: boolean
+          deleted_for_user_ids: string[]
+          edited_at: string | null
           id: string
           is_read: boolean
           receiver_id: string
           sender_id: string
-          subject: string | null
         }
         Insert: {
           body: string
           created_at?: string
+          deleted_for_everyone?: boolean
+          deleted_for_user_ids?: string[]
+          edited_at?: string | null
           id?: string
           is_read?: boolean
           receiver_id: string
           sender_id: string
-          subject?: string | null
         }
         Update: {
           body?: string
           created_at?: string
+          deleted_for_everyone?: boolean
+          deleted_for_user_ids?: string[]
+          edited_at?: string | null
           id?: string
           is_read?: boolean
           receiver_id?: string
           sender_id?: string
-          subject?: string | null
         }
         Relationships: []
       }
@@ -472,12 +478,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_message_for_everyone: {
+        Args: { p_message_id: string }
+        Returns: undefined
+      }
+      delete_message_for_me: {
+        Args: { p_message_id: string }
+        Returns: undefined
+      }
+      edit_message: {
+        Args: { p_message_id: string; p_new_body: string }
+        Returns: undefined
+      }
+      get_conversations: {
+        Args: never
+        Returns: {
+          last_at: string
+          last_body: string
+          last_deleted: boolean
+          last_sender_id: string
+          partner_id: string
+          unread_count: number
+        }[]
+      }
+      get_thread: {
+        Args: { p_partner_id: string }
+        Returns: {
+          body: string
+          created_at: string
+          deleted_for_everyone: boolean
+          edited_at: string
+          id: string
+          is_read: boolean
+          receiver_id: string
+          sender_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_thread_read: { Args: { p_partner_id: string }; Returns: undefined }
+      send_message: {
+        Args: { p_body: string; p_receiver_id: string }
+        Returns: string
       }
     }
     Enums: {
