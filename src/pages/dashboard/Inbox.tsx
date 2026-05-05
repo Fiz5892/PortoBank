@@ -157,8 +157,8 @@ const Inbox = () => {
     setLoading(true);
     loadConversations().finally(() => setLoading(false));
 
-    const channel = supabase
-      .channel(`inbox-${user.id}`)
+    const channel = supabase.channel(`inbox-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
         loadConversations();
         if (activePartnerId) loadThread(activePartnerId);
