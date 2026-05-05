@@ -192,9 +192,15 @@ const EditProfile = () => {
   return (
     <DashboardLayout>
       <div className="max-w-3xl space-y-6">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">Edit Profile</h1>
-          <p className="text-muted-foreground mt-1">Keep your professional info up to date.</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold">Edit Profile</h1>
+            <p className="text-muted-foreground mt-1">Keep your professional info up to date.</p>
+          </div>
+          <Button variant="outline" onClick={handleDownloadCV} disabled={downloadingCV}>
+            {downloadingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            Download CV
+          </Button>
         </div>
 
         <Card className="p-6 shadow-subtle space-y-5">
