@@ -141,13 +141,21 @@ const Navbar = () => {
           )}
         </div>
 
-        <button
-          className="md:hidden p-2 rounded-md hover:bg-secondary"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          {user && (
+            <>
+              <MessagesIcon />
+              <NotificationsBell />
+            </>
+          )}
+          <button
+            className="p-2 rounded-md hover:bg-secondary"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
