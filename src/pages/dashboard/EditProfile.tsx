@@ -35,6 +35,25 @@ const EditProfile = () => {
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [downloadingCV, setDownloadingCV] = useState(false);
+
+  const handleDownloadCV = async () => {
+    if (!user) return;
+    setDownloadingCV(true);
+    try {
+      const data = await fetchCVDataByUserId(user.id, user.email);
+      if (!data) {
+        toast.error("Profile not found");
+        return;
+      }
+      await downloadCV(data);
+      toast.success("CV downloaded");
+    } catch (e) {
+      toast.error("Could not generate CV");
+    } finally {
+      setDownloadingCV(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
