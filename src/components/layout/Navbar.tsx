@@ -111,17 +111,10 @@ const Navbar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard">
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  <Link to="/">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Home
                   </Link>
                 </DropdownMenuItem>
-                {profile?.username && (
-                  <DropdownMenuItem asChild>
-                    <Link to={`/${profile.username}`}>
-                      <UserCircle2 className="mr-2 h-4 w-4" /> View profile
-                    </Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
