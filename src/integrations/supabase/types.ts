@@ -514,6 +514,19 @@ export type Database = {
           sender_id: string
         }[]
       }
+      get_top_liked_profiles: {
+        Args: { p_pool?: number }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          location: string
+          profession: string
+          total_likes: number
+          user_id: string
+          username: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
