@@ -385,7 +385,7 @@ const Inbox = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <Link
-                    to={activePartner.username ? `/u/${activePartner.username}` : "#"}
+                    to={activePartner.username ? `/${activePartner.username}` : "#"}
                     className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
                   >
                     <Avatar className="h-9 w-9">
