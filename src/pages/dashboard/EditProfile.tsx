@@ -9,9 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Download } from "lucide-react";
 import TagInput from "@/components/onboarding/TagInput";
 import ImageCropDialog from "@/components/portfolio/ImageCropDialog";
+import { fetchCVDataByUserId } from "@/lib/cv-data";
+import { downloadCV } from "@/lib/cv-pdf";
 
 interface ProfileForm {
   id: string;
