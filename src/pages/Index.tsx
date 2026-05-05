@@ -49,15 +49,24 @@ const Index = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)")
-        .eq("is_public", true)
-        .eq("is_active", true)
-        .neq("role", "admin")
-        .order("created_at", { ascending: false })
-        .limit(6);
-      setFeatured((profiles as ProfileCardData[]) ?? []);
+      // Fetch top 100 users by total likes, then pick 6 at random.
+      const { data: pool } = await supabase.rpc("get_top_liked_profiles", { p_pool: 100 });
+      const poolArr = (pool ?? []) as ProfileCardData[];
+      const shuffled = [...poolArr].sort(() => Math.random() - 0.5).slice(0, 6);
+      // Fetch skills for the picked profiles
+      let withSkills: ProfileCardData[] = shuffled;
+      if (shuffled.length > 0) {
+        const ids = shuffled.map((p) => p.id);
+        const { data: sk } = await supabase.from("skills").select("profile_id, name").in("profile_id", ids);
+        const map = new Map<string, { name: string }[]>();
+        (sk ?? []).forEach((s) => {
+          const arr = map.get(s.profile_id) ?? [];
+          arr.push({ name: s.name });
+          map.set(s.profile_id, arr);
+        });
+        withSkills = shuffled.map((p) => ({ ...p, skills: map.get(p.id) ?? [] }));
+      }
+      setFeatured(withSkills);
 
       const [{ count: u }, { count: p }] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_active", true).neq("role", "admin"),

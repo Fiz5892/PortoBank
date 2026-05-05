@@ -9,9 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Download } from "lucide-react";
 import TagInput from "@/components/onboarding/TagInput";
 import ImageCropDialog from "@/components/portfolio/ImageCropDialog";
+import { fetchCVDataByUserId } from "@/lib/cv-data";
+import { downloadCV } from "@/lib/cv-pdf";
 
 interface ProfileForm {
   id: string;
@@ -33,6 +35,25 @@ const EditProfile = () => {
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [downloadingCV, setDownloadingCV] = useState(false);
+
+  const handleDownloadCV = async () => {
+    if (!user) return;
+    setDownloadingCV(true);
+    try {
+      const data = await fetchCVDataByUserId(user.id, user.email);
+      if (!data) {
+        toast.error("Profile not found");
+        return;
+      }
+      await downloadCV(data);
+      toast.success("CV downloaded");
+    } catch (e) {
+      toast.error("Could not generate CV");
+    } finally {
+      setDownloadingCV(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -171,9 +192,15 @@ const EditProfile = () => {
   return (
     <DashboardLayout>
       <div className="max-w-3xl space-y-6">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">Edit Profile</h1>
-          <p className="text-muted-foreground mt-1">Keep your professional info up to date.</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold">Edit Profile</h1>
+            <p className="text-muted-foreground mt-1">Keep your professional info up to date.</p>
+          </div>
+          <Button variant="outline" onClick={handleDownloadCV} disabled={downloadingCV}>
+            {downloadingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            Download CV
+          </Button>
         </div>
 
         <Card className="p-6 shadow-subtle space-y-5">

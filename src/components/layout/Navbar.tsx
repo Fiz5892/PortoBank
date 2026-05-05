@@ -111,17 +111,10 @@ const Navbar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard">
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  <Link to="/">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Home
                   </Link>
                 </DropdownMenuItem>
-                {profile?.username && (
-                  <DropdownMenuItem asChild>
-                    <Link to={`/${profile.username}`}>
-                      <UserCircle2 className="mr-2 h-4 w-4" /> View profile
-                    </Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
@@ -141,13 +134,21 @@ const Navbar = () => {
           )}
         </div>
 
-        <button
-          className="md:hidden p-2 rounded-md hover:bg-secondary"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          {user && (
+            <>
+              <MessagesIcon />
+              <NotificationsBell />
+            </>
+          )}
+          <button
+            className="p-2 rounded-md hover:bg-secondary"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
