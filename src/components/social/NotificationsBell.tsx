@@ -134,8 +134,9 @@ const NotificationsBell = () => {
     loadAll();
 
     // Realtime: messages received
-    const msgChannel = supabase
-      .channel(`notif-msg-${user.id}`)
+    const rand = Math.random().toString(36).slice(2);
+    const msgChannel = supabase.channel(`notif-msg-${user.id}-${rand}`);
+    msgChannel
       .on(
         "postgres_changes",
         {
@@ -149,8 +150,8 @@ const NotificationsBell = () => {
       .subscribe();
 
     // Realtime: likes on any portfolio (we filter client-side via reload)
-    const likeChannel = supabase
-      .channel(`notif-likes-${user.id}`)
+    const likeChannel = supabase.channel(`notif-likes-${user.id}-${rand}`);
+    likeChannel
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "likes" },

@@ -26,8 +26,8 @@ const MessagesIcon = () => {
 
     load();
 
-    const channel = supabase
-      .channel(`msg-icon-${user.id}`)
+    const channel = supabase.channel(`msg-icon-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel
       .on(
         "postgres_changes",
         {
