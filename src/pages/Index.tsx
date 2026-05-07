@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
 import { useSEO } from "@/hooks/useSEO";
+import { useAuth } from "@/hooks/useAuth";
 import heroImage from "@/assets/hero-portobank.jpg";
 
 const useCounter = (target: number, duration = 1500) => {
@@ -38,7 +39,9 @@ const StatItem = ({ value, label }: { value: number; label: string }) => {
 };
 
 const Index = () => {
+  const { user } = useAuth();
   const [featured, setFeatured] = useState<ProfileCardData[] | null>(null);
+  const [recs, setRecs] = useState<ProfileCardData[] | null>(null);
   const [stats, setStats] = useState({ users: 0, portfolios: 0, professions: 0 });
 
   useSEO({
@@ -88,6 +91,48 @@ const Index = () => {
     };
     load();
   }, []);
+
+  // Personalized recs
+  useEffect(() => {
+    if (!user) { setRecs(null); return; }
+    const loadRecs = async () => {
+      const { data: me } = await supabase
+        .from("profiles")
+        .select("id, profession")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!me) return;
+      const { data: mySkills } = await supabase.from("skills").select("name").eq("profile_id", me.id);
+      const skillNames = (mySkills ?? []).map((s) => s.name);
+
+      let req = supabase
+        .from("profiles")
+        .select("id, user_id, username, full_name, profession, location, avatar_url, skills(name)")
+        .eq("is_public", true)
+        .eq("is_active", true)
+        .neq("role", "admin")
+        .neq("user_id", user.id)
+        .limit(8);
+      if (me.profession) req = req.eq("profession", me.profession);
+      const { data } = await req;
+      let result = (data as ProfileCardData[]) ?? [];
+
+      // Score by overlapping skills
+      if (skillNames.length > 0) {
+        result = result
+          .map((p) => {
+            const overlap = (p.skills ?? []).filter((s) =>
+              skillNames.some((n) => n.toLowerCase() === s.name.toLowerCase()),
+            ).length;
+            return { p, overlap };
+          })
+          .sort((a, b) => b.overlap - a.overlap)
+          .map((x) => x.p);
+      }
+      setRecs(result.slice(0, 6));
+    };
+    loadRecs();
+  }, [user]);
 
   return (
     <Layout>
