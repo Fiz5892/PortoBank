@@ -286,6 +286,7 @@ export type Database = {
           is_public: boolean
           linkedin_url: string | null
           location: string | null
+          onboarding_completed: boolean
           phone: string | null
           profession: string | null
           role: string
@@ -309,6 +310,7 @@ export type Database = {
           is_public?: boolean
           linkedin_url?: string | null
           location?: string | null
+          onboarding_completed?: boolean
           phone?: string | null
           profession?: string | null
           role?: string
@@ -332,6 +334,7 @@ export type Database = {
           is_public?: boolean
           linkedin_url?: string | null
           location?: string | null
+          onboarding_completed?: boolean
           phone?: string | null
           profession?: string | null
           role?: string
