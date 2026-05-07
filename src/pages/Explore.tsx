@@ -342,7 +342,4 @@ const FilterBar = ({
     </div>
   );
 };
-  );
-};
 
-export default Explore;
