@@ -211,6 +211,11 @@ const Explore = () => {
                 </Button>
               </div>
             )}
+          </>
+        )}
+      </section>
+    </Layout>
+  );
 };
 
 export default Explore;
