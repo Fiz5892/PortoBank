@@ -108,20 +108,26 @@ const Register = () => {
       password: parsed.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/onboarding`,
-        data: { full_name: parsed.data.full_name, bio: parsed.data.bio },
+        data: {
+          full_name: parsed.data.full_name,
+          username: parsed.data.username,
+          bio: parsed.data.bio,
+        },
       },
     });
     if (!error && data.user) {
-      // best-effort: simpan bio ke profil
-      await supabase.from("profiles").update({ bio: parsed.data.bio }).eq("user_id", data.user.id);
+      await supabase
+        .from("profiles")
+        .update({ bio: parsed.data.bio, username: parsed.data.username })
+        .eq("user_id", data.user.id);
     }
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Akun dibuat! Silakan cek email Anda untuk verifikasi.", { duration: 6000 });
-    navigate("/login");
+    setRegisteredEmail(parsed.data.email);
+    setShowSuccess(true);
   };
 
   const onGoogle = async () => {
@@ -171,6 +177,18 @@ const Register = () => {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="anda@example.com" className="mt-1.5" />
               {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+            </div>
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })}
+                placeholder="namaunik"
+                className="mt-1.5"
+              />
+              {errors.username && <p className="text-xs text-destructive mt-1">{errors.username}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Akan jadi alamat portofolio: portobank.app/<b>{form.username || "username"}</b></p>
             </div>
             <div>
               <Label htmlFor="bio">Bio singkat</Label>
