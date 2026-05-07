@@ -197,18 +197,18 @@ const Register = () => {
                 rows={4}
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="Ceritakan tentang diri Anda, profesi, dan pengalaman (minimal 150 karakter)..."
+                placeholder="Ceritakan tentang diri Anda, profesi, dan pengalaman (150-300 karakter)..."
                 className="mt-1.5"
-                maxLength={500}
+                maxLength={300}
               />
               <div className="flex justify-between mt-1">
                 {errors.bio ? (
                   <p className="text-xs text-destructive">{errors.bio}</p>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Min. 150 karakter</span>
+                  <span className="text-xs text-muted-foreground">150-300 karakter</span>
                 )}
-                <span className={`text-xs ${form.bio.length >= 150 ? "text-primary" : "text-muted-foreground"}`}>
-                  {form.bio.length}/500
+                <span className={`text-xs ${form.bio.length >= 150 && form.bio.length <= 300 ? "text-primary" : "text-muted-foreground"}`}>
+                  {form.bio.length}/300
                 </span>
               </div>
             </div>
@@ -286,6 +286,30 @@ const Register = () => {
           </p>
         </Card>
       </section>
+
+      <Dialog open={showSuccess} onOpenChange={(o) => { if (!o) navigate("/login"); setShowSuccess(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+              <Mail className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Cek email Anda</DialogTitle>
+            <DialogDescription className="text-center">
+              Kami sudah mengirim link verifikasi ke <b>{registeredEmail}</b>. Buka email dan klik link tersebut untuk mengaktifkan akun Anda.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            <Button asChild className="w-full">
+              <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer">
+                <Mail className="mr-2 h-4 w-4" /> Buka Gmail
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => { setShowSuccess(false); navigate("/login"); }}>
+              Lanjut ke Sign in
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
