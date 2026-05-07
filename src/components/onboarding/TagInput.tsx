@@ -16,7 +16,7 @@ const TagInput = ({
   value,
   onChange,
   suggestions = [],
-  max = 20,
+  max = 6,
   placeholder = "Type a skill and press Enter",
 }: TagInputProps) => {
   const [input, setInput] = useState("");

@@ -2,15 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
 import EmptyState from "@/components/layout/EmptyState";
-import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 const PAGE_SIZE = 12;
 
@@ -116,61 +132,21 @@ const Explore = () => {
           />
         </div>
 
-        {/* Filter pills */}
-        {(professions.length > 0 || locations.length > 0) && (
-          <div className="mt-6 space-y-3">
-            {professions.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs font-semibold text-muted-foreground mr-1">Profession:</span>
-                {professions.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setProfession(profession === p ? null : p)}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      profession === p
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50",
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
-            {locations.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs font-semibold text-muted-foreground mr-1">Location:</span>
-                {locations.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLocation(location === l ? null : l)}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      location === l
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50",
-                    )}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            )}
-            {hasFilters && (
-              <button
-                onClick={() => {
-                  setQuery("");
-                  setProfession(null);
-                  setLocation(null);
-                }}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" /> Clear filters
-              </button>
-            )}
-          </div>
-        )}
+        <FilterBar
+          professions={professions}
+          locations={locations}
+          profession={profession}
+          location={location}
+          setProfession={setProfession}
+          setLocation={setLocation}
+          onResetAll={() => {
+            setQuery("");
+            setProfession(null);
+            setLocation(null);
+          }}
+          query={query}
+          onClearQuery={() => setQuery("")}
+        />
       </section>
 
       <section className="container pb-20">
@@ -243,3 +219,127 @@ const Explore = () => {
 };
 
 export default Explore;
+
+interface FilterBarProps {
+  professions: string[];
+  locations: string[];
+  profession: string | null;
+  location: string | null;
+  setProfession: (v: string | null) => void;
+  setLocation: (v: string | null) => void;
+  onResetAll: () => void;
+  query: string;
+  onClearQuery: () => void;
+}
+
+const FilterBar = ({
+  professions,
+  locations,
+  profession,
+  location,
+  setProfession,
+  setLocation,
+  onResetAll,
+  query,
+  onClearQuery,
+}: FilterBarProps) => {
+  const [open, setOpen] = useState(false);
+  const [draftProf, setDraftProf] = useState<string | null>(profession);
+  const [draftLoc, setDraftLoc] = useState<string | null>(location);
+
+  useEffect(() => {
+    if (open) {
+      setDraftProf(profession);
+      setDraftLoc(location);
+    }
+  }, [open, profession, location]);
+
+  const hasActive = profession || location || query;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <SlidersHorizontal className="h-4 w-4" /> Filter
+            {(profession || location) && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                {(profession ? 1 : 0) + (location ? 1 : 0)}
+              </Badge>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs">Profesi</Label>
+              <Select value={draftProf ?? "all"} onValueChange={(v) => setDraftProf(v === "all" ? null : v)}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Semua profesi" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua profesi</SelectItem>
+                  {professions.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Lokasi</Label>
+              <Select value={draftLoc ?? "all"} onValueChange={(v) => setDraftLoc(v === "all" ? null : v)}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Semua lokasi" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua lokasi</SelectItem>
+                  {locations.map((l) => (
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setDraftProf(null); setDraftLoc(null); }}>Reset</Button>
+            <Button onClick={() => { setProfession(draftProf); setLocation(draftLoc); setOpen(false); }}>Terapkan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {profession && (
+        <Badge variant="secondary" className="gap-1">
+          Profesi: {profession}
+          <button onClick={() => setProfession(null)} aria-label="Hapus filter profesi">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      )}
+      {location && (
+        <Badge variant="secondary" className="gap-1">
+          Lokasi: {location}
+          <button onClick={() => setLocation(null)} aria-label="Hapus filter lokasi">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      )}
+      {query && (
+        <Badge variant="secondary" className="gap-1">
+          “{query}”
+          <button onClick={onClearQuery} aria-label="Hapus pencarian">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      )}
+
+      {hasActive && (
+        <button
+          onClick={onResetAll}
+          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+        >
+          <X className="h-3 w-3" /> Reset Filter
+        </button>
+      )}
+    </div>
+  );
+};
+

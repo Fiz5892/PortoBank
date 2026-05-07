@@ -59,8 +59,15 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
     const key = k(cat, name);
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (next.size >= 6) {
+          toast.error("Maksimal 6 skill");
+          return prev;
+        }
+        next.add(key);
+      }
       return next;
     });
   };
@@ -119,7 +126,7 @@ const EditSkillsDialog = ({ open, onOpenChange, profileId, initial, onSaved }: P
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{selectedCount} selected</span>
+          <span className="text-muted-foreground">{selectedCount}/6 selected</span>
           {selectedCount > 0 && (
             <Button
               type="button"

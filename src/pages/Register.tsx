@@ -9,8 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle, Mail } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 const passwordSchema = z
@@ -25,7 +33,17 @@ const schema = z
   .object({
     full_name: z.string().trim().min(1, "Nama wajib diisi").max(100),
     email: z.string().trim().email("Email tidak valid").max(255),
-    bio: z.string().trim().min(150, "Bio minimal 150 karakter").max(500),
+    username: z
+      .string()
+      .trim()
+      .min(3, "Username minimal 3 karakter")
+      .max(30, "Username maksimal 30 karakter")
+      .regex(/^[a-z0-9_]+$/, "Hanya huruf kecil, angka, underscore"),
+    bio: z
+      .string()
+      .trim()
+      .min(150, "Bio minimal 150 karakter")
+      .max(300, "Bio maksimal 300 karakter"),
     password: passwordSchema,
     confirm: z.string(),
   })
@@ -36,11 +54,20 @@ const schema = z
 
 const Register = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ full_name: "", email: "", bio: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    username: "",
+    bio: "",
+    password: "",
+    confirm: "",
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   useSEO({
     title: "Buat akun — PortoBank",
@@ -81,20 +108,26 @@ const Register = () => {
       password: parsed.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/onboarding`,
-        data: { full_name: parsed.data.full_name, bio: parsed.data.bio },
+        data: {
+          full_name: parsed.data.full_name,
+          username: parsed.data.username,
+          bio: parsed.data.bio,
+        },
       },
     });
     if (!error && data.user) {
-      // best-effort: simpan bio ke profil
-      await supabase.from("profiles").update({ bio: parsed.data.bio }).eq("user_id", data.user.id);
+      await supabase
+        .from("profiles")
+        .update({ bio: parsed.data.bio, username: parsed.data.username })
+        .eq("user_id", data.user.id);
     }
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Akun dibuat! Silakan cek email Anda untuk verifikasi.", { duration: 6000 });
-    navigate("/login");
+    setRegisteredEmail(parsed.data.email);
+    setShowSuccess(true);
   };
 
   const onGoogle = async () => {
@@ -146,24 +179,36 @@ const Register = () => {
               {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })}
+                placeholder="namaunik"
+                className="mt-1.5"
+              />
+              {errors.username && <p className="text-xs text-destructive mt-1">{errors.username}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Akan jadi alamat portofolio: portobank.app/<b>{form.username || "username"}</b></p>
+            </div>
+            <div>
               <Label htmlFor="bio">Bio singkat</Label>
               <Textarea
                 id="bio"
                 rows={4}
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="Ceritakan tentang diri Anda, profesi, dan pengalaman (minimal 150 karakter)..."
+                placeholder="Ceritakan tentang diri Anda, profesi, dan pengalaman (150-300 karakter)..."
                 className="mt-1.5"
-                maxLength={500}
+                maxLength={300}
               />
               <div className="flex justify-between mt-1">
                 {errors.bio ? (
                   <p className="text-xs text-destructive">{errors.bio}</p>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Min. 150 karakter</span>
+                  <span className="text-xs text-muted-foreground">150-300 karakter</span>
                 )}
-                <span className={`text-xs ${form.bio.length >= 150 ? "text-primary" : "text-muted-foreground"}`}>
-                  {form.bio.length}/500
+                <span className={`text-xs ${form.bio.length >= 150 && form.bio.length <= 300 ? "text-primary" : "text-muted-foreground"}`}>
+                  {form.bio.length}/300
                 </span>
               </div>
             </div>
@@ -241,6 +286,30 @@ const Register = () => {
           </p>
         </Card>
       </section>
+
+      <Dialog open={showSuccess} onOpenChange={(o) => { if (!o) navigate("/login"); setShowSuccess(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+              <Mail className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Cek email Anda</DialogTitle>
+            <DialogDescription className="text-center">
+              Kami sudah mengirim link verifikasi ke <b>{registeredEmail}</b>. Buka email dan klik link tersebut untuk mengaktifkan akun Anda.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            <Button asChild className="w-full">
+              <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer">
+                <Mail className="mr-2 h-4 w-4" /> Buka Gmail
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => { setShowSuccess(false); navigate("/login"); }}>
+              Lanjut ke Sign in
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
