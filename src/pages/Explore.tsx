@@ -2,15 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
 import { ProfileCardSkeleton } from "@/components/profiles/ProfileCardSkeleton";
 import EmptyState from "@/components/layout/EmptyState";
-import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 const PAGE_SIZE = 12;
 
@@ -116,61 +132,30 @@ const Explore = () => {
           />
         </div>
 
-        {/* Filter pills */}
-        {(professions.length > 0 || locations.length > 0) && (
-          <div className="mt-6 space-y-3">
-            {professions.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs font-semibold text-muted-foreground mr-1">Profession:</span>
-                {professions.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setProfession(profession === p ? null : p)}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      profession === p
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50",
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
-            {locations.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs font-semibold text-muted-foreground mr-1">Location:</span>
-                {locations.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLocation(location === l ? null : l)}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      location === l
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:border-primary/50",
-                    )}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            )}
-            {hasFilters && (
-              <button
-                onClick={() => {
-                  setQuery("");
-                  setProfession(null);
-                  setLocation(null);
-                }}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" /> Clear filters
-              </button>
-            )}
-          </div>
-        )}
+        <FilterBar
+          professions={professions}
+          locations={locations}
+          profession={profession}
+          location={location}
+          setProfession={setProfession}
+          setLocation={setLocation}
+          onResetAll={() => {
+            setQuery("");
+            setProfession(null);
+            setLocation(null);
+          }}
+          query={query}
+          onClearQuery={() => setQuery("")}
+        />
+      </section>
+
+      <section className="container pb-20">
+        {/* spacer */}
+      </section>
+
+      <section className="container pb-20 -mt-20">{null}</section>
+
+      <section className="container pb-20 -mt-20">{null}</section>
       </section>
 
       <section className="container pb-20">
