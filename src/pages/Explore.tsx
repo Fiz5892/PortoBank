@@ -112,6 +112,12 @@ const Explore = () => {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = useMemo(() => query || profession || location, [query, profession, location]);
 
+  const handleResetAll = () => {
+    setQuery("");
+    setProfession(null);
+    setLocation(null);
+  };
+
   return (
     <Layout>
       <section className="container py-12 md:py-16">
@@ -122,31 +128,62 @@ const Explore = () => {
           </p>
         </div>
 
-        <div className="mt-8 relative max-w-2xl">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, profession, or skill..."
-            className="pl-10 h-12"
+        {/* Search + Filter button in one row */}
+        <div className="mt-8 flex items-center gap-2 max-w-2xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, profession, or skill..."
+              className="pl-10 h-12"
+            />
+          </div>
+          <FilterButton
+            professions={professions}
+            locations={locations}
+            profession={profession}
+            location={location}
+            setProfession={setProfession}
+            setLocation={setLocation}
           />
         </div>
 
-        <FilterBar
-          professions={professions}
-          locations={locations}
-          profession={profession}
-          location={location}
-          setProfession={setProfession}
-          setLocation={setLocation}
-          onResetAll={() => {
-            setQuery("");
-            setProfession(null);
-            setLocation(null);
-          }}
-          query={query}
-          onClearQuery={() => setQuery("")}
-        />
+        {/* Active filter badges below the search row */}
+        {hasFilters && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 max-w-2xl">
+            {profession && (
+              <Badge variant="secondary" className="gap-1">
+                Profesi: {profession}
+                <button onClick={() => setProfession(null)} aria-label="Hapus filter profesi">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {location && (
+              <Badge variant="secondary" className="gap-1">
+                Lokasi: {location}
+                <button onClick={() => setLocation(null)} aria-label="Hapus filter lokasi">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {query && (
+              <Badge variant="secondary" className="gap-1">
+                "{query}"
+                <button onClick={() => setQuery("")} aria-label="Hapus pencarian">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            <button
+              onClick={handleResetAll}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <X className="h-3 w-3" /> Reset Filter
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="container pb-20">
@@ -163,14 +200,7 @@ const Explore = () => {
             description="Try adjusting your search or filters, or be the first to publish a portfolio in this area."
             action={
               hasFilters ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setQuery("");
-                    setProfession(null);
-                    setLocation(null);
-                  }}
-                >
+                <Button variant="outline" onClick={handleResetAll}>
                   <X className="h-4 w-4 mr-2" /> Clear filters
                 </Button>
               ) : (
@@ -220,29 +250,24 @@ const Explore = () => {
 
 export default Explore;
 
-interface FilterBarProps {
+// Extracted filter dialog button (no badges, no reset — those live in the parent now)
+interface FilterButtonProps {
   professions: string[];
   locations: string[];
   profession: string | null;
   location: string | null;
   setProfession: (v: string | null) => void;
   setLocation: (v: string | null) => void;
-  onResetAll: () => void;
-  query: string;
-  onClearQuery: () => void;
 }
 
-const FilterBar = ({
+const FilterButton = ({
   professions,
   locations,
   profession,
   location,
   setProfession,
   setLocation,
-  onResetAll,
-  query,
-  onClearQuery,
-}: FilterBarProps) => {
+}: FilterButtonProps) => {
   const [open, setOpen] = useState(false);
   const [draftProf, setDraftProf] = useState<string | null>(profession);
   const [draftLoc, setDraftLoc] = useState<string | null>(location);
@@ -254,92 +279,79 @@ const FilterBar = ({
     }
   }, [open, profession, location]);
 
-  const hasActive = profession || location || query;
+  const activeCount = (profession ? 1 : 0) + (location ? 1 : 0);
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2">
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <SlidersHorizontal className="h-4 w-4" /> Filter
-            {(profession || location) && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                {(profession ? 1 : 0) + (location ? 1 : 0)}
-              </Badge>
-            )}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Filter</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs">Profesi</Label>
-              <Select value={draftProf ?? "all"} onValueChange={(v) => setDraftProf(v === "all" ? null : v)}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Semua profesi" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua profesi</SelectItem>
-                  {professions.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Lokasi</Label>
-              <Select value={draftLoc ?? "all"} onValueChange={(v) => setDraftLoc(v === "all" ? null : v)}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Semua lokasi" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua lokasi</SelectItem>
-                  {locations.map((l) => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 h-12 px-4 shrink-0">
+          <SlidersHorizontal className="h-4 w-4" />
+          Filter
+          {activeCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+              {activeCount}
+            </Badge>
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Filter</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs">Profesi</Label>
+            <Select
+              value={draftProf ?? "all"}
+              onValueChange={(v) => setDraftProf(v === "all" ? null : v)}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Semua profesi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua profesi</SelectItem>
+                {professions.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => { setDraftProf(null); setDraftLoc(null); }}>Reset</Button>
-            <Button onClick={() => { setProfession(draftProf); setLocation(draftLoc); setOpen(false); }}>Terapkan</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {profession && (
-        <Badge variant="secondary" className="gap-1">
-          Profesi: {profession}
-          <button onClick={() => setProfession(null)} aria-label="Hapus filter profesi">
-            <X className="h-3 w-3" />
-          </button>
-        </Badge>
-      )}
-      {location && (
-        <Badge variant="secondary" className="gap-1">
-          Lokasi: {location}
-          <button onClick={() => setLocation(null)} aria-label="Hapus filter lokasi">
-            <X className="h-3 w-3" />
-          </button>
-        </Badge>
-      )}
-      {query && (
-        <Badge variant="secondary" className="gap-1">
-          “{query}”
-          <button onClick={onClearQuery} aria-label="Hapus pencarian">
-            <X className="h-3 w-3" />
-          </button>
-        </Badge>
-      )}
-
-      {hasActive && (
-        <button
-          onClick={onResetAll}
-          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-        >
-          <X className="h-3 w-3" /> Reset Filter
-        </button>
-      )}
-    </div>
+          <div>
+            <Label className="text-xs">Lokasi</Label>
+            <Select
+              value={draftLoc ?? "all"}
+              onValueChange={(v) => setDraftLoc(v === "all" ? null : v)}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Semua lokasi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua lokasi</SelectItem>
+                {locations.map((l) => (
+                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            onClick={() => { setDraftProf(null); setDraftLoc(null); }}
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={() => {
+              setProfession(draftProf);
+              setLocation(draftLoc);
+              setOpen(false);
+            }}
+          >
+            Terapkan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
-
