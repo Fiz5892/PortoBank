@@ -9,8 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle, Mail } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 const passwordSchema = z
@@ -25,7 +33,17 @@ const schema = z
   .object({
     full_name: z.string().trim().min(1, "Nama wajib diisi").max(100),
     email: z.string().trim().email("Email tidak valid").max(255),
-    bio: z.string().trim().min(150, "Bio minimal 150 karakter").max(500),
+    username: z
+      .string()
+      .trim()
+      .min(3, "Username minimal 3 karakter")
+      .max(30, "Username maksimal 30 karakter")
+      .regex(/^[a-z0-9_]+$/, "Hanya huruf kecil, angka, underscore"),
+    bio: z
+      .string()
+      .trim()
+      .min(150, "Bio minimal 150 karakter")
+      .max(300, "Bio maksimal 300 karakter"),
     password: passwordSchema,
     confirm: z.string(),
   })
@@ -36,11 +54,20 @@ const schema = z
 
 const Register = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ full_name: "", email: "", bio: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    username: "",
+    bio: "",
+    password: "",
+    confirm: "",
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   useSEO({
     title: "Buat akun — PortoBank",
