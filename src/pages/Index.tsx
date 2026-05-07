@@ -173,6 +173,26 @@ const Index = () => {
         </div>
       </section>
 
+      {/* PERSONALIZED RECOMMENDATIONS (logged-in users) */}
+      {user && recs && recs.length > 0 && (
+        <section className="container pt-16 md:pt-20">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h2 className="font-heading text-2xl md:text-3xl font-bold">Direkomendasikan untuk Anda</h2>
+              <p className="text-muted-foreground mt-2">Berdasarkan profesi & skill Anda.</p>
+            </div>
+            <Link to="/explore" className="hidden sm:inline-flex items-center text-sm font-medium text-primary hover:underline">
+              See all <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {recs.map((p) => (
+              <ProfileCard key={p.id} profile={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* FEATURED PROFILES */}
       <section className="container py-16 md:py-24">
         <div className="flex items-end justify-between mb-8">
