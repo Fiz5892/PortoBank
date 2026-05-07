@@ -111,8 +111,8 @@ const Navbar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/">
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Home
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
