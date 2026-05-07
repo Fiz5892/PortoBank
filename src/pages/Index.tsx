@@ -148,16 +148,13 @@ const Index = () => {
         />
         <div className="container py-20 md:py-32">
           <div className="max-w-3xl animate-fade-in">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-secondary text-primary mb-6">
-              <Sparkles className="h-3 w-3" /> For every profession
-            </span>
             <h1 className="font-heading text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">
               Your Portfolio,{" "}
               <span className="text-primary">Your Identity.</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl">
               Build a beautiful professional portfolio in minutes. Showcase your work, get
-              discovered, and connect with opportunities — whatever your profession.
+              discovered, and connect with opportunities whatever your profession.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Button size="lg" asChild>
