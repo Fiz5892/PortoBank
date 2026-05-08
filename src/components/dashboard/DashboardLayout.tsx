@@ -56,12 +56,16 @@ const DashboardLayout = ({ children }: Props) => {
     const load = async () => {
       const { data: p } = await supabase
         .from("profiles")
-        .select("id, username, full_name, avatar_url, is_active")
+        .select("id, username, full_name, avatar_url, is_active, onboarding_completed")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (p && p.is_active === false) {
         navigate("/suspended", { replace: true });
+        return;
+      }
+      if (p && p.onboarding_completed === false) {
+        navigate("/onboarding", { replace: true });
         return;
       }
 
