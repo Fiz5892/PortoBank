@@ -99,6 +99,25 @@ const Settings = () => {
           <p className="text-muted-foreground mt-1">Manage your account and preferences.</p>
         </div>
 
+        <Card className="p-6 shadow-subtle">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex items-start gap-3">
+              <Eye className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <h2 className="font-heading font-semibold">Visibilitas portofolio</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {isPublic ? "Profil & portofolio Anda terlihat publik." : "Profil & portofolio Anda hanya terlihat oleh Anda."}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={!!isPublic}
+              disabled={isPublic === null}
+              onCheckedChange={toggleVisibility}
+            />
+          </div>
+        </Card>
+
         <Card className="p-6 shadow-subtle space-y-4">
           <h2 className="font-heading font-semibold">Change password</h2>
           <div className="grid gap-3 sm:grid-cols-2">
