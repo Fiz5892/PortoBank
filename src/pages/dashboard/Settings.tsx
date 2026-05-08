@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Eye } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -30,6 +30,34 @@ const Settings = () => {
   const [notif, setNotif] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("is_public")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setIsPublic(data.is_public);
+      });
+  }, [user]);
+
+  const toggleVisibility = async (next: boolean) => {
+    if (!user) return;
+    setIsPublic(next);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_public: next })
+      .eq("user_id", user.id);
+    if (error) {
+      setIsPublic(!next);
+      toast.error("Could not update visibility");
+    } else {
+      toast.success(next ? "Portofolio sekarang publik" : "Portofolio diatur ke privat");
+    }
+  };
 
   const updatePassword = async () => {
     if (pwd.length < 8) {
