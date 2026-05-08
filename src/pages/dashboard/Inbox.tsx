@@ -31,7 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, MailPlus, Search, Inbox as InboxIcon, Send, ArrowLeft,
-  MoreVertical, Smile, Check, CheckCheck, Pencil, Trash2,
+  MoreVertical, Smile, Check, CheckCheck, Pencil, Trash2, Copy,
 } from "lucide-react";
 import EmptyState from "@/components/layout/EmptyState";
 import { useSEO } from "@/hooks/useSEO";
@@ -443,6 +443,14 @@ const Inbox = () => {
                                     </button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align={mine ? "start" : "end"}>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(m.body);
+                                        toast.success("Pesan disalin");
+                                      }}
+                                    >
+                                      <Copy className="h-3.5 w-3.5 mr-2" /> Salin pesan
+                                    </DropdownMenuItem>
                                     {canEdit && (
                                       <DropdownMenuItem onClick={() => { setEditing(m); setEditText(m.body); }}>
                                         <Pencil className="h-3.5 w-3.5 mr-2" /> Edit (10 min)

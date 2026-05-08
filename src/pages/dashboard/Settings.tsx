@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Eye } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -30,6 +30,34 @@ const Settings = () => {
   const [notif, setNotif] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("is_public")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setIsPublic(data.is_public);
+      });
+  }, [user]);
+
+  const toggleVisibility = async (next: boolean) => {
+    if (!user) return;
+    setIsPublic(next);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_public: next })
+      .eq("user_id", user.id);
+    if (error) {
+      setIsPublic(!next);
+      toast.error("Could not update visibility");
+    } else {
+      toast.success(next ? "Portofolio sekarang publik" : "Portofolio diatur ke privat");
+    }
+  };
 
   const updatePassword = async () => {
     if (pwd.length < 8) {
@@ -70,6 +98,25 @@ const Settings = () => {
           <h1 className="font-heading text-2xl md:text-3xl font-bold">Settings</h1>
           <p className="text-muted-foreground mt-1">Manage your account and preferences.</p>
         </div>
+
+        <Card className="p-6 shadow-subtle">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex items-start gap-3">
+              <Eye className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <h2 className="font-heading font-semibold">Visibilitas portofolio</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {isPublic ? "Profil & portofolio Anda terlihat publik." : "Profil & portofolio Anda hanya terlihat oleh Anda."}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={!!isPublic}
+              disabled={isPublic === null}
+              onCheckedChange={toggleVisibility}
+            />
+          </div>
+        </Card>
 
         <Card className="p-6 shadow-subtle space-y-4">
           <h2 className="font-heading font-semibold">Change password</h2>

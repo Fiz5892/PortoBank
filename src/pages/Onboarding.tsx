@@ -362,6 +362,7 @@ const Onboarding = () => {
       await supabase.from("portfolio_items").insert(itemRows);
     }
 
+    await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", profileId);
     setSavingPortfolio(false);
     toast.success("Portfolio created!");
     navigate("/dashboard", { replace: true });
@@ -378,6 +379,7 @@ const Onboarding = () => {
     if (!existing || existing.length === 0) {
       await supabase.from("portfolios").insert({ user_id: user.id, title: "My Portfolio", is_published: false });
     }
+    await supabase.from("profiles").update({ onboarding_completed: true }).eq("user_id", user.id);
     navigate("/dashboard", { replace: true });
   };
 
