@@ -95,7 +95,6 @@ const DashboardLayout = ({ children }: Props) => {
 
   const navItems = [
     { to: "/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
-    { to: "/dashboard/portfolio", label: "My Portfolio", icon: Briefcase, end: false },
     { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: false },
     { to: "/dashboard/inbox", label: "Inbox", icon: Inbox, end: false, badge: unread },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
