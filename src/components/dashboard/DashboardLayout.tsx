@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
-  Briefcase,
+  
   UserCog,
   Inbox,
   Settings as SettingsIcon,
