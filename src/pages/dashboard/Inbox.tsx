@@ -182,35 +182,23 @@ const Inbox = () => {
 
     const partnerId = activePartnerId;
     const channel = supabase.channel(`thread-${user.id}-${partnerId}-${Math.random().toString(36).slice(2)}`);
+    // Note: message bodies are encrypted at rest, so realtime payloads contain
+    // ciphertext. We therefore re-run the get_thread RPC (server-side decrypt)
+    // on any change. Threads are short, this is cheap and keeps UI in sync.
     channel
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${partnerId}` },
-        (payload) => {
-          const m = payload.new as Message;
-          if (m.receiver_id !== user.id) return;
-          setThread((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
-          supabase.rpc("mark_thread_read", { p_partner_id: partnerId });
+        { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${partnerId}` },
+        () => {
+          loadThread(partnerId);
         },
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` },
-        (payload) => {
-          const m = payload.new as Message;
-          if (m.receiver_id !== partnerId) return;
-          setThread((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
+        { event: "*", schema: "public", table: "messages", filter: `receiver_id=eq.${partnerId}` },
+        () => {
+          loadThread(partnerId);
         },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages" },
-        () => loadThread(partnerId),
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "messages" },
-        () => loadThread(partnerId),
       )
       .subscribe();
 
