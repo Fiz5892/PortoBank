@@ -443,6 +443,14 @@ const Inbox = () => {
                                     </button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align={mine ? "start" : "end"}>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(m.body);
+                                        toast.success("Pesan disalin");
+                                      }}
+                                    >
+                                      <Copy className="h-3.5 w-3.5 mr-2" /> Salin pesan
+                                    </DropdownMenuItem>
                                     {canEdit && (
                                       <DropdownMenuItem onClick={() => { setEditing(m); setEditText(m.body); }}>
                                         <Pencil className="h-3.5 w-3.5 mr-2" /> Edit (10 min)
