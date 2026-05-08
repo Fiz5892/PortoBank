@@ -152,16 +152,20 @@ const Inbox = () => {
     await supabase.rpc("mark_thread_read", { p_partner_id: partnerId });
   };
 
+  // Inbox-level realtime: refresh conversation list whenever a message
+  // involving the current user is inserted/updated/deleted.
   useEffect(() => {
     if (!user) return;
     setLoading(true);
     loadConversations().finally(() => setLoading(false));
 
-    const channel = supabase.channel(`inbox-${user.id}-${Math.random().toString(36).slice(2)}`);
+    const channel = supabase.channel(`inbox-list-${user.id}-${Math.random().toString(36).slice(2)}`);
     channel
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` }, () => {
         loadConversations();
-        if (activePartnerId) loadThread(activePartnerId);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` }, () => {
+        loadConversations();
       })
       .subscribe();
 
@@ -169,10 +173,50 @@ const Inbox = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Active-thread realtime: re-subscribe whenever the open partner changes.
+  // On INSERT we append to local state (no full refetch). On UPDATE/DELETE we
+  // reload the thread so edits/deletes/read receipts are reflected accurately.
   useEffect(() => {
-    if (activePartnerId) loadThread(activePartnerId);
+    if (!user || !activePartnerId) return;
+    loadThread(activePartnerId);
+
+    const partnerId = activePartnerId;
+    const channel = supabase.channel(`thread-${user.id}-${partnerId}-${Math.random().toString(36).slice(2)}`);
+    channel
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${partnerId}` },
+        (payload) => {
+          const m = payload.new as Message;
+          if (m.receiver_id !== user.id) return;
+          setThread((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
+          supabase.rpc("mark_thread_read", { p_partner_id: partnerId });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` },
+        (payload) => {
+          const m = payload.new as Message;
+          if (m.receiver_id !== partnerId) return;
+          setThread((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages" },
+        () => loadThread(partnerId),
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "messages" },
+        () => loadThread(partnerId),
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePartnerId]);
+  }, [activePartnerId, user]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
