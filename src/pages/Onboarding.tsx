@@ -362,6 +362,7 @@ const Onboarding = () => {
       await supabase.from("portfolio_items").insert(itemRows);
     }
 
+    await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", profileId);
     setSavingPortfolio(false);
     toast.success("Portfolio created!");
     navigate("/dashboard", { replace: true });
