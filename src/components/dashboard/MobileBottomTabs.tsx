@@ -1,9 +1,9 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Briefcase,
   Inbox,
   UserCog,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -14,9 +14,9 @@ interface Props {
 
 const items = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard, end: true },
-  { to: "/dashboard/portfolio", label: "Portfolio", icon: Briefcase, end: false },
   { to: "/dashboard/inbox", label: "Inbox", icon: Inbox, end: false, badge: true },
   { to: "/dashboard/profile", label: "Profile", icon: UserCog, end: false },
+  { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
 ];
 
 /**
