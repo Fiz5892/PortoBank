@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PortoBank design system — all tokens defined here */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 25% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 25% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 25% 12%;
+
+    /* Brand */
+    --primary: 215 82% 51%;          /* #1D6FE8 */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 215 82% 45%;
+
+    --accent: 215 85% 39%;           /* #0F4FB8 */
+    --accent-foreground: 0 0% 100%;
+
+    --secondary: 210 25% 97%;        /* #F5F7FA */
+    --secondary-foreground: 222 25% 12%;
+
+    --muted: 210 25% 97%;            /* #F5F7FA */
+    --muted-foreground: 215 12% 45%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 91%;
+    --input: 214 20% 91%;
+    --ring: 215 82% 51%;
+
+    /* Radii */
+    --radius: 0.75rem;        /* 12px — cards */
+    --radius-sm: 0.5rem;      /* 8px — inputs/buttons */
+
+    /* Shadow */
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 25% 12%;
+    --sidebar-primary: 215 82% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 25% 97%;
+    --sidebar-accent-foreground: 222 25% 12%;
+    --sidebar-border: 214 20% 91%;
+    --sidebar-ring: 215 82% 51%;
+  }
+
+  .dark {
+    --background: 222 25% 8%;
+    --foreground: 0 0% 98%;
+    --card: 222 25% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 222 25% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 215 82% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 215 82% 64%;
+    --accent: 215 85% 50%;
+    --accent-foreground: 0 0% 100%;
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 222 20% 16%;
+    --muted-foreground: 215 12% 65%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 20% 18%;
+    --input: 222 20% 18%;
+    --ring: 215 82% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    @apply tracking-tight;
+  }
+
+  /* Accessibility — visible focus ring on every interactive element */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-sm;
+  }
+
+  /* Bottom-tab safe area on mobile dashboard pages */
+  .has-bottom-tabs {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@layer utilities {
+  /* Big gradient heading used by portfolio sections (Education, Projects, etc.) */
+  .text-gradient-brand {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--primary)) 0%,
+      hsl(195 85% 55%) 60%,
+      hsl(180 70% 45%) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Soft dotted/grid background used behind hero & between sections */
+  .bg-dot-grid {
+    background-image: radial-gradient(
+      hsl(var(--foreground) / 0.07) 1px,
+      transparent 1px
+    );
+    background-size: 18px 18px;
+  }
+
+  /* Hide horizontal scrollbar for the projects carousel */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

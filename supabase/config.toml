@@ -1,0 +1,4 @@
+project_id = "cgqfekphzqehlfvykriw"
+
+[functions.extract-cv]
+verify_jwt = true
