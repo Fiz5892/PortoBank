@@ -120,7 +120,7 @@ const NotificationsBell = () => {
           title: `New message from ${name}`,
           subtitle: m.deleted_for_everyone ? "Message deleted" : "Tap to open conversation",
           createdAt: m.created_at,
-          href: "/dashboard/inbox",
+          href: "/inbox",
           unread: !m.is_read,
         };
       });

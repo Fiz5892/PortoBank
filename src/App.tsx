@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,10 +10,8 @@ import Register from "./pages/Register.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
-import Overview from "./pages/dashboard/Overview.tsx";
-import MyPortfolio from "./pages/dashboard/MyPortfolio.tsx";
 import EditProfile from "./pages/dashboard/EditProfile.tsx";
-import Inbox from "./pages/dashboard/Inbox.tsx";
+import Inbox from "./pages/Inbox.tsx";
 import DashboardSettings from "./pages/dashboard/Settings.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
@@ -45,10 +43,10 @@ const AnimatedRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/suspended" element={<Suspended />} />
-      <Route path="/dashboard" element={<Overview />} />
-      <Route path="/dashboard/portfolio" element={<MyPortfolio />} />
+      <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
       <Route path="/dashboard/profile" element={<EditProfile />} />
-      <Route path="/dashboard/inbox" element={<Inbox />} />
+      <Route path="/inbox" element={<Inbox />} />
+      <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
       <Route path="/dashboard/settings" element={<DashboardSettings />} />
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />

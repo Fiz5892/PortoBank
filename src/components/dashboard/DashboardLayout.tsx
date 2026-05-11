@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,7 +16,6 @@ import {
   LayoutDashboard,
   
   UserCog,
-  Inbox,
   Settings as SettingsIcon,
   ExternalLink,
   Loader2,
@@ -98,9 +96,7 @@ const DashboardLayout = ({ children }: Props) => {
     .toUpperCase();
 
   const navItems = [
-    { to: "/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
-    { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: false },
-    { to: "/dashboard/inbox", label: "Inbox", icon: Inbox, end: false, badge: unread },
+    { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: true },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
   ];
 
@@ -137,9 +133,6 @@ const DashboardLayout = ({ children }: Props) => {
             <item.icon className="h-4 w-4" />
             {item.label}
           </span>
-          {item.badge ? (
-            <Badge className="h-5 min-w-5 px-1.5 text-xs">{item.badge}</Badge>
-          ) : null}
         </NavLink>
       ))}
     </nav>

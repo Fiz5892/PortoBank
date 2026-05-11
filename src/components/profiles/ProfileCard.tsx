@@ -76,9 +76,11 @@ const ProfileCard = ({ profile, variant = "default" }: ProfileCardProps) => {
         </div>
       )}
 
-      <Button asChild className="mt-5 w-full" variant="outline" size="sm">
-        <Link to={`/${slug}`}>View Portfolio</Link>
-      </Button>
+      <div className="mt-auto pt-5">
+        <Button asChild className="w-full" variant="outline" size="sm">
+          <Link to={`/${slug}`}>View Portfolio</Link>
+        </Button>
+      </div>
     </Card>
   );
 };

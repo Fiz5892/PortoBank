@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { Link, useNavigate } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +94,8 @@ const dayLabel = (iso: string) => {
 const minutesSince = (iso: string) => (Date.now() - new Date(iso).getTime()) / 60000;
 
 const Inbox = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   useSEO({ title: "Inbox — PortoBank", description: "Chat with people who reached out from your portfolio." });
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -119,6 +120,32 @@ const Inbox = () => {
   const [newResults, setNewResults] = useState<UserInfo[]>([]);
   const [newRecipient, setNewRecipient] = useState<UserInfo | null>(null);
   const [newBody, setNewBody] = useState("");
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    const checkProfile = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_active, onboarding_completed")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile?.is_active === false) {
+        navigate("/suspended", { replace: true });
+        return;
+      }
+      if (profile?.onboarding_completed === false) {
+        navigate("/onboarding", { replace: true });
+      }
+    };
+
+    checkProfile();
+  }, [authLoading, user, navigate]);
 
   const ensureUsers = async (ids: string[]) => {
     const missing = ids.filter((id) => !users[id]);
@@ -312,9 +339,20 @@ const Inbox = () => {
     return groups;
   }, [thread]);
 
+  if (authLoading || !user) {
+    return (
+      <Layout>
+        <div className="container flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <DashboardLayout>
-      <div className="max-w-6xl space-y-6">
+    <Layout>
+      <section className="container py-6 md:py-8">
+        <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="font-heading text-2xl md:text-3xl font-bold">Inbox</h1>
@@ -328,7 +366,7 @@ const Inbox = () => {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
-          <Card className={cn("p-2 shadow-subtle max-h-[75vh] overflow-y-auto", activePartnerId && "hidden lg:block")}>
+          <Card className={cn("p-2 shadow-subtle max-h-[calc(100vh-220px)] min-h-[560px] overflow-y-auto", activePartnerId && "hidden lg:block")}>
             <div className="flex gap-1.5 p-2">
               {(["all", "unread", "read"] as FilterMode[]).map((f) => (
                 <button
@@ -409,7 +447,7 @@ const Inbox = () => {
             )}
           </Card>
 
-          <Card className={cn("shadow-subtle flex flex-col h-[75vh]", !activePartnerId && "hidden lg:flex")}>
+          <Card className={cn("shadow-subtle flex flex-col h-[calc(100vh-220px)] min-h-[560px]", !activePartnerId && "hidden lg:flex")}>
             {activePartnerId && activePartner ? (
               <>
                 <div className="flex items-center gap-3 p-4 border-b">
@@ -545,7 +583,6 @@ const Inbox = () => {
             )}
           </Card>
         </div>
-      </div>
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
@@ -624,7 +661,9 @@ const Inbox = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+        </div>
+      </section>
+    </Layout>
   );
 };
 
