@@ -98,7 +98,6 @@ const DashboardLayout = ({ children }: Props) => {
     .toUpperCase();
 
   const navItems = [
-    { to: "/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
     { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: false },
     { to: "/dashboard/inbox", label: "Inbox", icon: Inbox, end: false, badge: unread },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
