@@ -10,9 +10,8 @@ import Register from "./pages/Register.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
-import MyPortfolio from "./pages/dashboard/MyPortfolio.tsx";
 import EditProfile from "./pages/dashboard/EditProfile.tsx";
-import Inbox from "./pages/dashboard/Inbox.tsx";
+import Inbox from "./pages/Inbox.tsx";
 import DashboardSettings from "./pages/dashboard/Settings.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
@@ -45,8 +44,6 @@ const AnimatedRoutes = () => {
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/suspended" element={<Suspended />} />
       <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
-      <Route path="/dashboard/portfolio" element={<MyPortfolio />} />
-      <Route path="/dashboard/portfolio/new" element={<MyPortfolio />} />
       <Route path="/dashboard/profile" element={<EditProfile />} />
       <Route path="/inbox" element={<Inbox />} />
       <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
