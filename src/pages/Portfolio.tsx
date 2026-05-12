@@ -405,11 +405,11 @@ const Portfolio = () => {
         </div>
       )}
 
-      {/* In-page anchor nav (pill, sticky-ish at top of hero) */}
-      <div className="container pt-6">
+      {/* In-page anchor nav (pill) */}
+      <div className="sticky top-4 z-40 pt-6 pointer-events-none">
         <nav
           aria-label="Sections"
-          className="hidden md:flex items-center justify-center gap-1 mx-auto w-fit rounded-full border bg-card/70 backdrop-blur px-2 py-1 shadow-subtle"
+          className="pointer-events-auto hidden md:flex items-center justify-center gap-1 mx-auto w-fit rounded-full border bg-card/80 backdrop-blur-md px-2 py-1 shadow-subtle"
         >
           <NavAnchor href="#hero">Home</NavAnchor>
           <NavAnchor href="#experience">Experiences</NavAnchor>

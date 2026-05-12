@@ -7,7 +7,6 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -39,11 +38,6 @@ const schema = z
       .min(3, "Username minimal 3 karakter")
       .max(30, "Username maksimal 30 karakter")
       .regex(/^[a-z0-9_]+$/, "Hanya huruf kecil, angka, underscore"),
-    bio: z
-      .string()
-      .trim()
-      .min(150, "Bio minimal 150 karakter")
-      .max(300, "Bio maksimal 300 karakter"),
     password: passwordSchema,
     confirm: z.string(),
   })
@@ -58,7 +52,6 @@ const Register = () => {
     full_name: "",
     email: "",
     username: "",
-    bio: "",
     password: "",
     confirm: "",
   });
@@ -111,14 +104,13 @@ const Register = () => {
         data: {
           full_name: parsed.data.full_name,
           username: parsed.data.username,
-          bio: parsed.data.bio,
         },
       },
     });
     if (!error && data.user) {
       await supabase
         .from("profiles")
-        .update({ bio: parsed.data.bio, username: parsed.data.username })
+        .update({ username: parsed.data.username })
         .eq("user_id", data.user.id);
     }
     setSubmitting(false);
@@ -190,28 +182,7 @@ const Register = () => {
               {errors.username && <p className="text-xs text-destructive mt-1">{errors.username}</p>}
               <p className="text-xs text-muted-foreground mt-1">Akan jadi alamat portofolio: portobank.app/<b>{form.username || "username"}</b></p>
             </div>
-            <div>
-              <Label htmlFor="bio">Bio singkat</Label>
-              <Textarea
-                id="bio"
-                rows={4}
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="Ceritakan tentang diri Anda, profesi, dan pengalaman (150-300 karakter)..."
-                className="mt-1.5"
-                maxLength={300}
-              />
-              <div className="flex justify-between mt-1">
-                {errors.bio ? (
-                  <p className="text-xs text-destructive">{errors.bio}</p>
-                ) : (
-                  <span className="text-xs text-muted-foreground">150-300 karakter</span>
-                )}
-                <span className={`text-xs ${form.bio.length >= 150 && form.bio.length <= 300 ? "text-primary" : "text-muted-foreground"}`}>
-                  {form.bio.length}/300
-                </span>
-              </div>
-            </div>
+
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1.5">
