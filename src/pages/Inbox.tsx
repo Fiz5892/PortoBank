@@ -144,8 +144,7 @@ const Inbox = () => {
   const [deleteConversationDialog, setDeleteConversationDialog] = useState<{
     open: boolean;
     partnerId: string | null;
-    forEveryone: boolean;
-  }>({ open: false, partnerId: null, forEveryone: false });
+  }>({ open: false, partnerId: null });
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -264,23 +263,15 @@ const Inbox = () => {
     }
   };
 
-  // Hapus percakapan (hilangkan dari daftar kiri)
-  const deleteConversation = async (partnerId: string, forEveryone: boolean) => {
+  // Hapus percakapan (hilangkan dari daftar kiri) - hanya untuk diri sendiri
+  const deleteConversation = async (partnerId: string) => {
     if (!user) return;
     try {
-      if (forEveryone) {
-        const { error } = await supabase.rpc("delete_conversation_for_everyone", {
-          p_partner_id: partnerId,
-        });
-        if (error) throw error;
-        toast.success("Riwayat chat dihapus untuk semua peserta");
-      } else {
-        const { error } = await supabase.rpc("delete_conversation_for_me", {
-          p_partner_id: partnerId,
-        });
-        if (error) throw error;
-        toast.success("Percakapan dihapus dari akun Anda");
-      }
+      const { error } = await supabase.rpc("delete_conversation_for_me", {
+        p_partner_id: partnerId,
+      });
+      if (error) throw error;
+      toast.success("Percakapan dihapus dari akun Anda");
 
       setConversations((prev) => prev.filter((c) => c.partner_id !== partnerId));
       if (activePartnerId === partnerId) {
@@ -715,7 +706,6 @@ const Inbox = () => {
                                   setDeleteConversationDialog({
                                     open: true,
                                     partnerId: c.partner_id,
-                                    forEveryone: false,
                                   })
                                 }
                                 className="text-destructive"
@@ -733,7 +723,7 @@ const Inbox = () => {
               </div>
             </Card>
 
-            {/* Area Chat Kanan (tidak berubah) */}
+            {/* Area Chat Kanan */}
             <Card
               className={cn(
                 "shadow-subtle flex flex-col min-h-0",
@@ -1011,16 +1001,12 @@ const Inbox = () => {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Dialog konfirmasi hapus percakapan */}
+          {/* Dialog konfirmasi hapus percakapan (hanya untuk diri sendiri) */}
           <AlertDialog
             open={deleteConversationDialog.open}
             onOpenChange={(open) =>
               !open &&
-              setDeleteConversationDialog({
-                open: false,
-                partnerId: null,
-                forEveryone: false,
-              })
+              setDeleteConversationDialog({ open: false, partnerId: null })
             }
           >
             <AlertDialogContent>
@@ -1036,16 +1022,9 @@ const Inbox = () => {
                 <AlertDialogAction
                   onClick={() => {
                     if (deleteConversationDialog.partnerId) {
-                      deleteConversation(
-                        deleteConversationDialog.partnerId,
-                        deleteConversationDialog.forEveryone
-                      );
+                      deleteConversation(deleteConversationDialog.partnerId);
                     }
-                    setDeleteConversationDialog({
-                      open: false,
-                      partnerId: null,
-                      forEveryone: false,
-                    });
+                    setDeleteConversationDialog({ open: false, partnerId: null });
                   }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
@@ -1055,7 +1034,7 @@ const Inbox = () => {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Dialog Edit Pesan dan New Message (sama seperti sebelumnya) */}
+          {/* Dialog Edit Pesan */}
           <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
@@ -1080,6 +1059,7 @@ const Inbox = () => {
             </DialogContent>
           </Dialog>
 
+          {/* Dialog New Message */}
           <Dialog open={newOpen} onOpenChange={setNewOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
