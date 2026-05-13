@@ -1,24 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import Layout from "@/components/layout/Layout";
-import EmptyState from "@/components/layout/EmptyState";
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,51 +36,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-
-import {
-  ArrowLeft,
-  Check,
-  CheckCheck,
-  Copy,
-  Inbox as InboxIcon,
   Loader2,
   MailPlus,
-  MoreVertical,
-  Pencil,
   Search,
+  Inbox as InboxIcon,
   Send,
+  ArrowLeft,
+  MoreVertical,
   Smile,
+  Check,
+  CheckCheck,
+  Pencil,
   Trash2,
+  Copy,
 } from "lucide-react";
-
-import EmojiPicker, { Theme } from "emoji-picker-react";
-
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-
-import { useAuth } from "@/hooks/useAuth";
+import EmptyState from "@/components/layout/EmptyState";
 import { useSEO } from "@/hooks/useSEO";
-
-import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface Message {
   id: string;
@@ -100,6 +84,7 @@ interface Conversation {
   last_sender_id: string;
   last_deleted: boolean;
   unread_count: number;
+  partner?: UserInfo;
 }
 
 type FilterMode = "all" | "unread" | "read";
@@ -107,361 +92,1104 @@ type FilterMode = "all" | "unread" | "read";
 const formatListTime = (iso: string) => {
   const d = new Date(iso);
   const now = new Date();
-
-  if (d.toDateString() === now.toDateString()) {
-    return d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay)
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const diff = (now.getTime() - d.getTime()) / 86400000;
+  if (diff < 7) return d.toLocaleDateString([], { weekday: "short" });
   return d.toLocaleDateString();
 };
+
+const dayLabel = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yest = new Date(today.getTime() - 86400000);
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (day.getTime() === today.getTime()) return "Today";
+  if (day.getTime() === yest.getTime()) return "Yesterday";
+  const diff = (today.getTime() - day.getTime()) / 86400000;
+  if (diff < 7) return d.toLocaleDateString([], { weekday: "long" });
+  return d.toLocaleDateString([], {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const minutesSince = (iso: string) =>
+  (Date.now() - new Date(iso).getTime()) / 60000;
 
 const Inbox = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
   useSEO({
     title: "Inbox — PortoBank",
     description: "Chat with people who reached out from your portfolio.",
   });
 
-  const [loading, setLoading] = useState(true);
-
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [thread, setThread] = useState<Message[]>([]);
-
   const [users, setUsers] = useState<Record<string, UserInfo>>({});
-
   const [activePartnerId, setActivePartnerId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterMode>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [clearConversationDialog, setClearConversationDialog] = useState<{
+    open: boolean;
+    partnerId: string | null;
+  }>({ open: false, partnerId: null });
+
+  const [deleteConversationDialog, setDeleteConversationDialog] = useState<{
+    open: boolean;
+    partnerId: string | null;
+    forEveryone: boolean;
+  }>({ open: false, partnerId: null, forEveryone: false });
 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-
-  const [filter, setFilter] = useState<FilterMode>("all");
-
-  const [searchQuery, setSearchQuery] = useState("");
-
   const [emojiOpen, setEmojiOpen] = useState(false);
-
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const activePartner = activePartnerId
-    ? users[activePartnerId]
-    : undefined;
+  const [editing, setEditing] = useState<Message | null>(null);
+  const [editText, setEditText] = useState("");
+
+  const [newOpen, setNewOpen] = useState(false);
+  const [newSearch, setNewSearch] = useState("");
+  const [newResults, setNewResults] = useState<UserInfo[]>([]);
+  const [newRecipient, setNewRecipient] = useState<UserInfo | null>(null);
+  const [newBody, setNewBody] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
-
     if (!user) {
-      navigate("/login");
+      navigate("/login", { replace: true });
+      return;
     }
+
+    const checkProfile = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_active, onboarding_completed")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile?.is_active === false) {
+        navigate("/suspended", { replace: true });
+        return;
+      }
+      if (profile?.onboarding_completed === false) {
+        navigate("/onboarding", { replace: true });
+      }
+    };
+
+    checkProfile();
   }, [authLoading, user, navigate]);
 
-  const loadConversations = async () => {
-    const { data, error } = await supabase.rpc("get_conversations");
+  const ensureUsers = async (ids: string[]) => {
+    const missing = ids.filter((id) => !users[id]);
+    if (missing.length === 0) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, username, avatar_url")
+      .in("user_id", missing);
+    if (data) {
+      setUsers((prev) => {
+        const next = { ...prev };
+        data.forEach((u) => {
+          next[u.user_id] = u as UserInfo;
+        });
+        return next;
+      });
+    }
+  };
 
+  const loadConversations = async () => {
+    if (!user) return;
+    const { data, error } = await supabase.rpc("get_conversations");
     if (error) {
       console.error(error);
       return;
     }
-
-    setConversations(data || []);
+    const convs = (data ?? []) as Conversation[];
+    setConversations(convs);
+    await ensureUsers(convs.map((c) => c.partner_id));
   };
 
   const loadThread = async (partnerId: string) => {
     const { data, error } = await supabase.rpc("get_thread", {
       p_partner_id: partnerId,
     });
-
     if (error) {
       console.error(error);
       return;
     }
+    setThread((data ?? []) as Message[]);
+    await supabase.rpc("mark_thread_read", { p_partner_id: partnerId });
+  };
 
-    setThread(data || []);
+  // Bersihkan obrolan (hapus semua pesan, tapi item chat tetap ada)
+  const clearConversation = async (partnerId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.rpc("clear_conversation_for_me", {
+        p_partner_id: partnerId,
+      });
+      if (error) throw error;
+      toast.success("Riwayat chat dibersihkan");
+
+      // Update daftar percakapan: set last_body menjadi indikator kosong
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.partner_id === partnerId
+            ? {
+                ...c,
+                last_body: "Chat cleared",
+                last_deleted: true,
+                last_at: new Date().toISOString(),
+                last_sender_id: user.id,
+                unread_count: 0,
+              }
+            : c
+        )
+      );
+      // Jika sedang aktif, reload thread (akan kosong)
+      if (activePartnerId === partnerId) {
+        loadThread(partnerId);
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Gagal membersihkan obrolan");
+    }
+  };
+
+  // Hapus percakapan (hilangkan dari daftar kiri)
+  const deleteConversation = async (partnerId: string, forEveryone: boolean) => {
+    if (!user) return;
+    try {
+      if (forEveryone) {
+        const { error } = await supabase.rpc("delete_conversation_for_everyone", {
+          p_partner_id: partnerId,
+        });
+        if (error) throw error;
+        toast.success("Riwayat chat dihapus untuk semua peserta");
+      } else {
+        const { error } = await supabase.rpc("delete_conversation_for_me", {
+          p_partner_id: partnerId,
+        });
+        if (error) throw error;
+        toast.success("Percakapan dihapus dari akun Anda");
+      }
+
+      setConversations((prev) => prev.filter((c) => c.partner_id !== partnerId));
+      if (activePartnerId === partnerId) {
+        setActivePartnerId(null);
+        setThread([]);
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Gagal menghapus percakapan");
+    }
   };
 
   useEffect(() => {
     if (!user) return;
-
     setLoading(true);
+    loadConversations().finally(() => setLoading(false));
 
-    loadConversations().finally(() => {
-      setLoading(false);
-    });
+    const channel = supabase.channel(
+      `inbox-list-${user.id}-${Math.random().toString(36).slice(2)}`
+    );
+    channel
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        () => {
+          loadConversations();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `sender_id=eq.${user.id}`,
+        },
+        () => {
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   useEffect(() => {
-    if (!activePartnerId) return;
-
+    if (!user || !activePartnerId) return;
     loadThread(activePartnerId);
-  }, [activePartnerId]);
+
+    const partnerId = activePartnerId;
+    const channel = supabase.channel(
+      `thread-${user.id}-${partnerId}-${Math.random().toString(36).slice(2)}`
+    );
+    channel
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `sender_id=eq.${partnerId}`,
+        },
+        () => {
+          loadThread(partnerId);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${partnerId}`,
+        },
+        () => {
+          loadThread(partnerId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activePartnerId, user]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop =
-        scrollRef.current.scrollHeight;
+    if (scrollRef.current)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [thread.length, activePartnerId]);
+
+  const filteredConversations = useMemo(() => {
+    let filtered = conversations;
+    if (filter === "unread")
+      filtered = filtered.filter((c) => c.unread_count > 0);
+    if (filter === "read")
+      filtered = filtered.filter((c) => c.unread_count === 0);
+    if (searchQuery.trim() !== "") {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter((c) => {
+        const partner = users[c.partner_id];
+        if (!partner) return false;
+        const fullName = (partner.full_name || "").toLowerCase();
+        const username = (partner.username || "").toLowerCase();
+        return fullName.includes(lowerQuery) || username.includes(lowerQuery);
+      });
     }
-  }, [thread]);
+    return filtered;
+  }, [conversations, filter, searchQuery, users]);
+
+  const activePartner = activePartnerId ? users[activePartnerId] : undefined;
 
   const sendMessage = async () => {
-    if (!draft.trim() || !activePartnerId) return;
-
+    if (!user || !activePartnerId || !draft.trim()) return;
     setSending(true);
-
     const { error } = await supabase.rpc("send_message", {
       p_receiver_id: activePartnerId,
       p_body: draft.trim(),
     });
-
     setSending(false);
-
     if (error) {
-      toast.error("Failed to send message");
+      toast.error("Could not send");
       return;
     }
-
     setDraft("");
-
     loadThread(activePartnerId);
     loadConversations();
   };
 
-  const filteredConversations = useMemo(() => {
-    let filtered = conversations;
+  useEffect(() => {
+    if (!newOpen) return;
+    const t = setTimeout(async () => {
+      if (newSearch.trim().length < 2) {
+        setNewResults([]);
+        return;
+      }
+      const term = `%${newSearch.trim()}%`;
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, username, avatar_url")
+        .eq("is_public", true)
+        .eq("is_active", true)
+        .neq("role", "admin")
+        .or(`full_name.ilike.${term},username.ilike.${term}`)
+        .limit(8);
+      setNewResults((data ?? []) as UserInfo[]);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [newSearch, newOpen]);
 
-    if (filter === "unread") {
-      filtered = filtered.filter((c) => c.unread_count > 0);
+  const startNewConversation = async () => {
+    if (!user || !newRecipient || !newBody.trim()) return;
+    setSending(true);
+    const { error } = await supabase.rpc("send_message", {
+      p_receiver_id: newRecipient.user_id,
+      p_body: newBody.trim(),
+    });
+    setSending(false);
+    if (error) {
+      toast.error("Could not send");
+      return;
     }
+    toast.success("Message sent");
+    setUsers((prev) => ({ ...prev, [newRecipient.user_id]: newRecipient }));
+    setActivePartnerId(newRecipient.user_id);
+    setNewOpen(false);
+    setNewRecipient(null);
+    setNewSearch("");
+    setNewBody("");
+    loadConversations();
+  };
 
-    if (filter === "read") {
-      filtered = filtered.filter((c) => c.unread_count === 0);
+  const handleEdit = async () => {
+    if (!editing || !editText.trim()) return;
+    const { error } = await supabase.rpc("edit_message", {
+      p_message_id: editing.id,
+      p_new_body: editText.trim(),
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
     }
+    setEditing(null);
+    if (activePartnerId) loadThread(activePartnerId);
+    loadConversations();
+  };
 
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((c) => {
-        const partner = users[c.partner_id];
-
-        return (
-          partner?.full_name
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          partner?.username
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase())
-        );
-      });
+  const handleDeleteForEveryone = async (m: Message) => {
+    const { error } = await supabase.rpc("delete_message_for_everyone", {
+      p_message_id: m.id,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
     }
+    if (activePartnerId) loadThread(activePartnerId);
+    loadConversations();
+  };
 
-    return filtered;
-  }, [conversations, filter, searchQuery, users]);
+  const handleDeleteForMe = async (m: Message) => {
+    const { error } = await supabase.rpc("delete_message_for_me", {
+      p_message_id: m.id,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (activePartnerId) loadThread(activePartnerId);
+    loadConversations();
+  };
+
+  const initialsOf = (s?: UserInfo | null) =>
+    (s?.full_name || s?.username || "?")
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+
+  const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count, 0);
+
+  const threadGroups = useMemo(() => {
+    const groups: { day: string; items: Message[] }[] = [];
+    for (const m of thread) {
+      const label = dayLabel(m.created_at);
+      const last = groups[groups.length - 1];
+      if (last && last.day === label) last.items.push(m);
+      else groups.push({ day: label, items: [m] });
+    }
+    return groups;
+  }, [thread]);
 
   if (authLoading || !user) {
     return (
       <Layout showFooter={false}>
         <div className="container flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout>
-      <section className="container py-6">
-        <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
-
-          {/* Sidebar */}
-          <Card className="p-2">
-
-            <div className="flex items-center justify-between p-2">
-              <h1 className="text-xl font-bold">Inbox</h1>
-
-              <Button size="sm">
-                <MailPlus className="h-4 w-4 mr-2" />
-                New
-              </Button>
+    <Layout showFooter={false}>
+      <section className="container py-4 flex flex-col h-[calc(100vh-72px)] min-h-[600px]">
+        <div className="mx-auto max-w-7xl w-full flex-1 flex flex-col min-h-0 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 shrink-0">
+            <div>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">
+                Inbox
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {totalUnread > 0
+                  ? `${totalUnread} unread message${totalUnread > 1 ? "s" : ""}`
+                  : "All caught up."}
+              </p>
             </div>
+            <Button onClick={() => setNewOpen(true)}>
+              <MailPlus className="mr-2 h-4 w-4" /> New Message
+            </Button>
+          </div>
 
-            <div className="relative p-2">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-              <Input
-                placeholder="Search..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) =>
-                  setSearchQuery(e.target.value)
-                }
-              />
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <EmptyState
-                icon={InboxIcon}
-                title="No conversation"
-                description="Your inbox is empty."
-              />
-            ) : (
-              <div className="space-y-1">
-                {filteredConversations.map((c) => {
-                  const partner = users[c.partner_id];
-
-                  return (
-                    <button
-                      key={c.partner_id}
-                      onClick={() =>
-                        setActivePartnerId(c.partner_id)
-                      }
-                      className="w-full flex gap-3 p-3 rounded-lg hover:bg-secondary text-left"
-                    >
-                      <Avatar>
-                        <AvatarImage
-                          src={partner?.avatar_url || ""}
-                        />
-                        <AvatarFallback>
-                          {partner?.full_name?.[0] || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {partner?.full_name ||
-                            partner?.username}
-                        </p>
-
-                        <p className="text-xs text-muted-foreground truncate">
-                          {c.last_body}
-                        </p>
-                      </div>
-
-                      <span className="text-xs text-muted-foreground">
-                        {formatListTime(c.last_at)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-
-          {/* Chat Area */}
-          <Card className="flex flex-col h-[80vh]">
-
-            {activePartner ? (
-              <>
-                <div className="border-b p-4 flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage
-                      src={activePartner.avatar_url || ""}
-                    />
-                    <AvatarFallback>
-                      {activePartner.full_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div>
-                    <p className="font-semibold">
-                      {activePartner.full_name}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">
-                      @{activePartner.username}
-                    </p>
-                  </div>
+          <div className="grid gap-4 lg:grid-cols-[360px_1fr] flex-1 min-h-0">
+            {/* Daftar Chat - Kiri */}
+            <Card
+              className={cn(
+                "p-2 shadow-subtle flex flex-col min-h-0",
+                activePartnerId && "hidden lg:flex"
+              )}
+            >
+              <div className="p-2 border-b mb-2 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 h-9 text-sm"
+                  />
                 </div>
+              </div>
 
-                <div
-                  ref={scrollRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-3"
-                >
-                  {thread.map((m) => {
-                    const mine = m.sender_id === user.id;
+              <div className="flex gap-1.5 p-2 pt-0 shrink-0">
+                {(["all", "unread", "read"] as FilterMode[]).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors",
+                      filter === f
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-foreground/70 hover:bg-secondary/70"
+                    )}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
 
+              <div className="flex-1 overflow-y-auto">
+                {loading ? (
+                <div className="py-12 flex justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredConversations.length === 0 ? (
+                <EmptyState
+                  icon={InboxIcon}
+                  title={
+                    searchQuery
+                      ? "No matching conversations"
+                      : filter === "all"
+                      ? "No conversations yet"
+                      : `No ${filter} chats`
+                  }
+                  description={
+                    searchQuery
+                      ? `No one found for "${searchQuery}"`
+                      : filter === "all"
+                      ? "Start a conversation or wait for someone to reach out."
+                      : "Try a different filter."
+                  }
+                  action={
+                    !searchQuery && filter === "all" ? (
+                      <Button onClick={() => setNewOpen(true)}>
+                        <MailPlus className="mr-2 h-4 w-4" /> Compose a message
+                      </Button>
+                    ) : undefined
+                  }
+                  className="py-8"
+                />
+              ) : (
+                <ul className="flex flex-col">
+                  {filteredConversations.map((c) => {
+                    const partner = users[c.partner_id];
+                    const active = activePartnerId === c.partner_id;
+                    const isMine = user && c.last_sender_id === user.id;
                     return (
-                      <div
-                        key={m.id}
-                        className={cn(
-                          "flex",
-                          mine
-                            ? "justify-end"
-                            : "justify-start"
-                        )}
-                      >
-                        <div
+                      <li key={c.partner_id} className="relative group/item">
+                        <button
+                          onClick={() => setActivePartnerId(c.partner_id)}
                           className={cn(
-                            "rounded-2xl px-4 py-2 max-w-[75%]",
-                            mine
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary"
+                            "w-full text-left p-3 rounded-md flex gap-3 transition-colors pr-10",
+                            active ? "bg-primary/10" : "hover:bg-secondary"
                           )}
                         >
-                          <p className="text-sm">
-                            {m.body}
-                          </p>
+                          <Avatar className="h-10 w-10 shrink-0">
+                            {partner?.avatar_url && (
+                              <AvatarImage
+                                src={partner.avatar_url}
+                                alt={partner.full_name ?? ""}
+                              />
+                            )}
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {initialsOf(partner)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p
+                                className={cn(
+                                  "text-sm truncate",
+                                  c.unread_count > 0 && "font-semibold"
+                                )}
+                              >
+                                {partner?.full_name ||
+                                  partner?.username ||
+                                  "Unknown"}
+                              </p>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {formatListTime(c.last_at)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                              <p
+                                className={cn(
+                                  "text-xs truncate",
+                                  c.unread_count > 0
+                                    ? "text-foreground"
+                                    : "text-muted-foreground",
+                                  c.last_deleted && "italic"
+                                )}
+                              >
+                                {c.last_deleted ? (
+                                  "Chat cleared"
+                                ) : (
+                                  <>
+                                    {isMine && "You: "}
+                                    {c.last_body}
+                                  </>
+                                )}
+                              </p>
+                              {c.unread_count > 0 && (
+                                <span className="bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center shrink-0">
+                                  {c.unread_count > 9 ? "9+" : c.unread_count}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Tombol tiga titik dengan dua opsi */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setClearConversationDialog({
+                                    open: true,
+                                    partnerId: c.partner_id,
+                                  })
+                                }
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Bersihkan obrolan
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setDeleteConversationDialog({
+                                    open: true,
+                                    partnerId: c.partner_id,
+                                    forEveryone: false,
+                                  })
+                                }
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Hapus percakapan
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
-
-                <div className="border-t p-3 flex gap-2">
-                  <Popover
-                    open={emojiOpen}
-                    onOpenChange={setEmojiOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <Smile className="h-5 w-5" />
-                      </Button>
-                    </PopoverTrigger>
-
-                    <PopoverContent className="p-0 border-none w-auto">
-                      <EmojiPicker
-                        theme={Theme.LIGHT}
-                        onEmojiClick={(e) =>
-                          setDraft((d) => d + e.emoji)
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Textarea
-                    value={draft}
-                    onChange={(e) =>
-                      setDraft(e.target.value)
-                    }
-                    placeholder="Type a message..."
-                    className="min-h-[42px]"
-                  />
-
-                  <Button
-                    size="icon"
-                    onClick={sendMessage}
-                  >
-                    {sending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                Select a conversation
+                </ul>
+              )}
               </div>
-            )}
-          </Card>
+            </Card>
+
+            {/* Area Chat Kanan (tidak berubah) */}
+            <Card
+              className={cn(
+                "shadow-subtle flex flex-col min-h-0",
+                !activePartnerId && "hidden lg:flex"
+              )}
+            >
+              {activePartnerId && activePartner ? (
+                <>
+                  <div className="flex items-center gap-3 p-4 border-b">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="lg:hidden h-8 w-8"
+                      onClick={() => setActivePartnerId(null)}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <Link
+                      to={activePartner.username ? `/${activePartner.username}` : "#"}
+                      className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar className="h-9 w-9">
+                        {activePartner.avatar_url && (
+                          <AvatarImage
+                            src={activePartner.avatar_url}
+                            alt={activePartner.full_name ?? ""}
+                          />
+                        )}
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          {initialsOf(activePartner)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">
+                          {activePartner.full_name ||
+                            activePartner.username ||
+                            "Unknown"}
+                        </p>
+                        {activePartner.username && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{activePartner.username}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+
+                  <div
+                    ref={scrollRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-2 bg-muted/20"
+                  >
+                    {threadGroups.map((g) => (
+                      <div key={g.day} className="space-y-2">
+                        <div className="flex justify-center my-2">
+                          <span className="text-[11px] bg-background px-3 py-1 rounded-full text-muted-foreground border">
+                            {g.day}
+                          </span>
+                        </div>
+                        {g.items.map((m) => {
+                          const mine = m.sender_id === user?.id;
+                          const canEdit =
+                            mine &&
+                            !m.deleted_for_everyone &&
+                            minutesSince(m.created_at) < 10;
+                          const canDeleteAll =
+                            mine &&
+                            !m.deleted_for_everyone &&
+                            minutesSince(m.created_at) < 360;
+                          return (
+                            <div
+                              key={m.id}
+                              className={cn(
+                                "flex group",
+                                mine ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "relative max-w-[75%] rounded-2xl shadow-subtle",
+                                  mine
+                                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                                    : "bg-card text-foreground rounded-bl-sm border"
+                                )}
+                              >
+                                {m.deleted_for_everyone ? (
+                                  <div className="px-3.5 py-2 text-sm italic opacity-70 flex items-center gap-2">
+                                    <Trash2 className="h-3 w-3" />
+                                    This message was deleted
+                                  </div>
+                                ) : (
+                                  <div className="px-3.5 py-1.5 pb-1">
+                                    <div className="flex items-end gap-2">
+                                      <p className="text-sm whitespace-pre-wrap break-words flex-1">
+                                        {m.body}
+                                      </p>
+                                      <span
+                                        className={cn(
+                                          "text-[10px] shrink-0 self-end pb-0.5 inline-flex items-center gap-1",
+                                          mine
+                                            ? "text-primary-foreground/70"
+                                            : "text-muted-foreground"
+                                        )}
+                                      >
+                                        {m.edited_at && (
+                                          <em className="opacity-70">edited</em>
+                                        )}
+                                        {new Date(m.created_at).toLocaleTimeString(
+                                          [],
+                                          {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )}
+                                        {mine &&
+                                          (m.is_read ? (
+                                            <CheckCheck className="h-3 w-3" />
+                                          ) : (
+                                            <Check className="h-3 w-3" />
+                                          ))}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {!m.deleted_for_everyone && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        className={cn(
+                                          "absolute -top-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-full bg-background border flex items-center justify-center",
+                                          mine ? "-left-2" : "-right-2"
+                                        )}
+                                      >
+                                        <MoreVertical className="h-3 w-3 text-foreground" />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align={mine ? "start" : "end"}
+                                    >
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(m.body);
+                                          toast.success("Pesan disalin");
+                                        }}
+                                      >
+                                        <Copy className="h-3.5 w-3.5 mr-2" />{" "}
+                                        Salin pesan
+                                      </DropdownMenuItem>
+                                      {canEdit && (
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setEditing(m);
+                                            setEditText(m.body);
+                                          }}
+                                        >
+                                          <Pencil className="h-3.5 w-3.5 mr-2" />{" "}
+                                          Edit (10 min)
+                                        </DropdownMenuItem>
+                                      )}
+                                      {canDeleteAll && (
+                                        <DropdownMenuItem
+                                          onClick={() => handleDeleteForEveryone(m)}
+                                          className="text-destructive"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5 mr-2" />{" "}
+                                          Delete for everyone
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem
+                                        onClick={() => handleDeleteForMe(m)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5 mr-2" />{" "}
+                                        Delete for me
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-3 border-t flex items-end gap-2">
+                    <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 h-10 w-10"
+                        >
+                          <Smile className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="top"
+                        align="start"
+                        className="p-0 border-none w-auto"
+                      >
+                        <EmojiPicker
+                          theme={Theme.LIGHT}
+                          onEmojiClick={(e) => {
+                            setDraft((d) => d + e.emoji);
+                          }}
+                          width={320}
+                          height={380}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      placeholder="Type a message..."
+                      rows={1}
+                      className="resize-none min-h-[40px] max-h-32"
+                    />
+                    <Button
+                      onClick={sendMessage}
+                      disabled={sending || !draft.trim()}
+                      size="icon"
+                      className="shrink-0"
+                    >
+                      {sending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                  Select a conversation to start chatting.
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Dialog konfirmasi bersihkan obrolan */}
+          <AlertDialog
+            open={clearConversationDialog.open}
+            onOpenChange={(open) =>
+              !open &&
+              setClearConversationDialog({ open: false, partnerId: null })
+            }
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Bersihkan obrolan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Semua pesan dalam obrolan ini akan dihapus dari akun Anda.
+                  Obrolan akan tetap muncul di daftar, namun kosong.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (clearConversationDialog.partnerId) {
+                      clearConversation(clearConversationDialog.partnerId);
+                    }
+                    setClearConversationDialog({ open: false, partnerId: null });
+                  }}
+                >
+                  Bersihkan
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Dialog konfirmasi hapus percakapan */}
+          <AlertDialog
+            open={deleteConversationDialog.open}
+            onOpenChange={(open) =>
+              !open &&
+              setDeleteConversationDialog({
+                open: false,
+                partnerId: null,
+                forEveryone: false,
+              })
+            }
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Hapus percakapan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Percakapan ini akan dihapus dari daftar chat Anda.
+                  Pesan di sisi lawan tetap ada.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (deleteConversationDialog.partnerId) {
+                      deleteConversation(
+                        deleteConversationDialog.partnerId,
+                        deleteConversationDialog.forEveryone
+                      );
+                    }
+                    setDeleteConversationDialog({
+                      open: false,
+                      partnerId: null,
+                      forEveryone: false,
+                    });
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Hapus
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Dialog Edit Pesan dan New Message (sama seperti sebelumnya) */}
+          <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit message</DialogTitle>
+                <DialogDescription>
+                  You can edit messages within 10 minutes of sending.
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={4}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditing(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleEdit} disabled={!editText.trim()}>
+                  Save
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={newOpen} onOpenChange={setNewOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>New message</DialogTitle>
+                <DialogDescription>
+                  Search a public user to message.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>To</Label>
+                  {newRecipient ? (
+                    <div className="mt-1.5 flex items-center justify-between p-2.5 border rounded-md">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Avatar className="h-7 w-7">
+                          {newRecipient.avatar_url && (
+                            <AvatarImage
+                              src={newRecipient.avatar_url}
+                              alt={newRecipient.full_name ?? ""}
+                            />
+                          )}
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {initialsOf(newRecipient)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm truncate">
+                          {newRecipient.full_name || newRecipient.username}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNewRecipient(null)}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative mt-1.5">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by name or username..."
+                          className="pl-9"
+                          value={newSearch}
+                          onChange={(e) => setNewSearch(e.target.value)}
+                        />
+                      </div>
+                      {newResults.length > 0 && (
+                        <ul className="mt-2 border rounded-md max-h-52 overflow-y-auto">
+                          {newResults.map((r) => (
+                            <li key={r.user_id}>
+                              <button
+                                onClick={() => {
+                                  setNewRecipient(r);
+                                  setNewResults([]);
+                                  setNewSearch("");
+                                }}
+                                className="w-full text-left p-2.5 flex items-center gap-2 hover:bg-secondary"
+                              >
+                                <Avatar className="h-7 w-7">
+                                  {r.avatar_url && (
+                                    <AvatarImage
+                                      src={r.avatar_url}
+                                      alt={r.full_name ?? ""}
+                                    />
+                                  )}
+                                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                    {initialsOf(r)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm truncate">
+                                  {r.full_name || r.username}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="n-body">Message</Label>
+                  <Textarea
+                    id="n-body"
+                    rows={5}
+                    value={newBody}
+                    onChange={(e) => setNewBody(e.target.value)}
+                    placeholder="Write your message..."
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setNewOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={startNewConversation}
+                  disabled={sending || !newRecipient || !newBody.trim()}
+                >
+                  {sending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Send
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </section>
     </Layout>
