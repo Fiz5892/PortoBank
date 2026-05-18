@@ -64,6 +64,305 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [downloadingCV, setDownloadingCV] = useState(false);
+  const supabaseMergedRef = useRef(false);
+
+  useEffect(() => {
+    if (!user || supabaseMergedRef.current) return;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        throwIfError(profileError);
+
+        const { data: educationData, error: educationError } = await supabase
+          .from(TABLE.education)
+          .select('*')
+          .eq('user_id', user.id);
+        throwIfError(educationError);
+
+        const { data: experienceData, error: experienceError } = await supabase
+          .from(TABLE.experience)
+          .select('*')
+          .eq('user_id', user.id);
+        throwIfError(experienceError);
+
+        const { data: portfoliosData, error: portfoliosError } = await supabase
+          .from(TABLE.portfolios)
+          .select('id')
+          .eq('user_id', user.id);
+        throwIfError(portfoliosError);
+
+        const portfolioIds = (portfoliosData ?? []).map((portfolio) => portfolio.id);
+        const { data: portfolioData, error: portfolioItemsError } = portfolioIds.length > 0
+          ? await supabase
+              .from(TABLE.portfolioItems)
+              .select('*')
+              .in('portfolio_id', portfolioIds)
+          : { data: [], error: null };
+        throwIfError(portfolioItemsError);
+
+        const { data: skillsData, error: skillsError } = profileData?.id
+          ? await supabase
+              .from(TABLE.skills)
+              .select('*')
+              .eq('profile_id', profileData.id)
+          : { data: [], error: null };
+        throwIfError(skillsError);
+
+        setData({
+          profile: profileData ? {
+            full_name: profileData.full_name || '',
+            profession: profileData.profession || '',
+            bio: profileData.bio || '',
+            location: profileData.location || '',
+            avatar_url: profileData.avatar_url ?? null,
+            email: profileData.email_contact || user.email || '',
+            linkedin_url: profileData.linkedin_url || '',
+            github_url: profileData.github_url || '',
+            website_url: profileData.website_url || '',
+            twitter_url: profileData.twitter_url || '',
+          } : { ...DEFAULT_PROFILE, email: user.email || '' },
+          education: (educationData ?? []).map((edu: any) => ({
+            id: edu.id,
+            institution_name: edu.institution_name || '',
+            degree: edu.degree || '',
+            field_of_study: edu.field_of_study || '',
+            start_year: edu.start_year || 0,
+            end_year: edu.end_year || 0,
+            gpa: edu.gpa ? parseFloat(edu.gpa) : undefined,
+            description: edu.description || '',
+            logo_url: edu.institution_logo_url,
+          })),
+          experience: (experienceData ?? []).map((exp: any) => ({
+            id: exp.id,
+            job_title: exp.job_title || '',
+            company_name: exp.company_name || '',
+            employment_type: exp.employment_type || 'Full-time',
+            location: exp.location || '',
+            start_date: exp.start_date ? exp.start_date.slice(0, 7) : '',
+            end_date: exp.end_date ? exp.end_date.slice(0, 7) : null,
+            is_current: exp.is_current || false,
+            description: exp.description || '',
+            logo_url: exp.company_logo_url,
+          })),
+          portfolio: (portfolioData ?? []).map((proj: any) => ({
+            id: proj.id,
+            title: proj.title || '',
+            description: proj.description || '',
+            tech_stack: proj.tags || [],
+            demo_url: proj.external_link || undefined,
+            repository_url: undefined,
+            year: new Date(proj.created_at || Date.now()).getFullYear(),
+          })),
+          skills: (skillsData ?? []).map((skill: any) => ({
+            id: skill.id,
+            name: skill.name || '',
+            category: skill.category || 'Programming Language',
+            level: skill.level || 'Intermediate',
+          })),
+        });
+
+        supabaseMergedRef.current = true;
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast.error('Failed to load your data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  const saveProfile = async (completed = false) => {
+    if (!user) return null;
+    const { data: profileRow, error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          user_id: user.id,
+          full_name: data.profile.full_name,
+          profession: data.profile.profession,
+          bio: data.profile.bio,
+          location: data.profile.location,
+          avatar_url: data.profile.avatar_url,
+          email_contact: data.profile.email || user.email || null,
+          linkedin_url: data.profile.linkedin_url,
+          github_url: data.profile.github_url,
+          website_url: data.profile.website_url,
+          twitter_url: data.profile.twitter_url,
+          onboarding_completed: completed || true,
+        },
+        { onConflict: 'user_id' }
+      )
+      .select('id')
+      .single();
+
+    throwIfError(error);
+    return profileRow.id;
+  };
+
+  const saveEducation = async () => {
+    if (!user) return;
+    const { error: deleteError } = await supabase.from(TABLE.education).delete().eq('user_id', user.id);
+    throwIfError(deleteError);
+    if (data.education.length === 0) return;
+    const { error } = await supabase.from(TABLE.education).insert(
+      data.education.map((edu) => ({
+        user_id: user.id,
+        institution_name: edu.institution_name,
+        degree: edu.degree,
+        field_of_study: edu.field_of_study || null,
+        start_year: edu.start_year || null,
+        end_year: edu.end_year || null,
+        gpa: edu.gpa != null ? String(edu.gpa) : null,
+        description: edu.description || null,
+        institution_logo_url: edu.logo_url || null,
+      }))
+    );
+    throwIfError(error);
+  };
+
+  const saveExperience = async () => {
+    if (!user) return;
+    const { error: deleteError } = await supabase.from(TABLE.experience).delete().eq('user_id', user.id);
+    throwIfError(deleteError);
+    if (data.experience.length === 0) return;
+    const { error } = await supabase.from(TABLE.experience).insert(
+      data.experience.map((exp) => ({
+        user_id: user.id,
+        job_title: exp.job_title,
+        company_name: exp.company_name,
+        employment_type: exp.employment_type,
+        location: exp.location || null,
+        start_date: exp.start_date ? exp.start_date + '-01' : null,
+        end_date: exp.is_current ? null : exp.end_date ? exp.end_date + '-01' : null,
+        is_current: exp.is_current,
+        description: exp.description || null,
+        company_logo_url: exp.logo_url || null,
+      }))
+    );
+    throwIfError(error);
+  };
+
+  const ensurePortfolio = async () => {
+    if (!user) return null;
+    const { data: existing, error: selectError } = await supabase
+      .from(TABLE.portfolios)
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    throwIfError(selectError);
+
+    if (existing?.id) {
+      const { error } = await supabase.from(TABLE.portfolios).update({ is_published: true }).eq('id', existing.id);
+      throwIfError(error);
+      return existing.id;
+    }
+
+    const { data: inserted, error } = await supabase
+      .from(TABLE.portfolios)
+      .insert({
+        user_id: user.id,
+        title: `${data.profile.full_name || 'My'} Portfolio`,
+        description: data.profile.bio || null,
+        is_published: true,
+      })
+      .select('id')
+      .single();
+    throwIfError(error);
+    return inserted.id;
+  };
+
+  const savePortfolio = async () => {
+    const portfolioId = await ensurePortfolio();
+    if (!portfolioId) return;
+    const { error: deleteError } = await supabase.from(TABLE.portfolioItems).delete().eq('portfolio_id', portfolioId);
+    throwIfError(deleteError);
+    if (data.portfolio.length === 0) return;
+    const { error } = await supabase.from(TABLE.portfolioItems).insert(
+      data.portfolio.map((proj) => ({
+        portfolio_id: portfolioId,
+        type: 'Project',
+        title: proj.title,
+        description: proj.description || null,
+        external_link: proj.demo_url || proj.repository_url || null,
+        tags: [...proj.tech_stack, ...(proj.year ? [String(proj.year)] : [])],
+      }))
+    );
+    throwIfError(error);
+  };
+
+  const saveSkills = async (profileId?: string | null) => {
+    if (!user) return;
+    const id = profileId ?? (await saveProfile(true));
+    if (!id) throw new Error('Profile row was not found');
+    const { error: deleteError } = await supabase.from(TABLE.skills).delete().eq('profile_id', id);
+    throwIfError(deleteError);
+    if (data.skills.length === 0) return;
+    const { error } = await supabase.from(TABLE.skills).insert(
+      data.skills.map((skill) => ({
+        profile_id: id,
+        name: skill.name,
+        category: skill.category,
+        level: skill.level || 'Intermediate',
+      }))
+    );
+    throwIfError(error);
+  };
+
+  const saveCurrentStep = async () => {
+    if (!user) return false;
+    setIsSaving(true);
+    try {
+      switch (currentStep) {
+        case 0: await saveProfile(true); break;
+        case 1: await saveEducation(); break;
+        case 2: await saveExperience(); break;
+        case 3: await savePortfolio(); break;
+        case 4: await saveSkills(); break;
+      }
+      toast.success('Changes saved');
+      return true;
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error('Failed to save changes');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const goToNextStep = async () => {
+    const saved = await saveCurrentStep();
+    if (saved && currentStep < STEPS.length - 1) {
+      setCurrentStep((s) => s + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 0) setCurrentStep((s) => s - 1);
+  };
+
+  const handleFinish = async () => {
+    const saved = await saveCurrentStep();
+    if (saved) {
+      toast.success('Profile updated successfully!');
+    }
+  };
+
+  const handleStepClick = async (step: number) => {
+    if (step !== currentStep) {
+      await saveCurrentStep();
+      setCurrentStep(step);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;

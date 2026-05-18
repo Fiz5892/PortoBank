@@ -45,6 +45,8 @@ const DashboardLayout = ({ children }: Props) => {
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const [isDesktopOpen, setIsDesktopOpen] = useState(true);
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -141,8 +143,15 @@ const DashboardLayout = ({ children }: Props) => {
   return (
     <div className="min-h-screen bg-secondary/40 flex">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col border-r border-border bg-background sticky top-0 h-screen">
-        {sidebar}
+      <aside 
+        className={cn(
+          "hidden md:flex md:flex-col border-border bg-background sticky top-0 h-screen transition-all duration-300 shrink-0",
+          isDesktopOpen ? "w-64 border-r opacity-100" : "w-0 border-transparent opacity-0 overflow-hidden"
+        )}
+      >
+        <div className="w-64 min-w-[16rem]">
+          {sidebar}
+        </div>
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -162,7 +171,7 @@ const DashboardLayout = ({ children }: Props) => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 w-full">
         <header className="sticky top-0 z-30 bg-background/85 backdrop-blur border-b border-border">
           <div className="flex items-center justify-between gap-3 px-4 md:px-8 h-16">
             <div className="flex items-center gap-2 min-w-0">
@@ -173,7 +182,14 @@ const DashboardLayout = ({ children }: Props) => {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="min-w-0">
+              <button
+                className="hidden md:block p-2 -ml-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"
+                onClick={() => setIsDesktopOpen(!isDesktopOpen)}
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 ml-1">
                 <p className="text-sm text-muted-foreground hidden sm:block">Welcome back</p>
                 <p className="font-heading font-semibold truncate">
                   {profile?.full_name || user.email}
