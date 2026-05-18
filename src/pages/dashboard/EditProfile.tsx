@@ -171,35 +171,6 @@ const EditProfile = () => {
     load();
   }, [user]);
 
-  const saveProfile = async () => {
-    if (!user) return null;
-
-    const { data: profileRow, error } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          user_id: user.id,
-          full_name: data.profile.full_name,
-          profession: data.profile.profession,
-          bio: data.profile.bio,
-          location: data.profile.location,
-          avatar_url: data.profile.avatar_url,
-          email_contact: data.profile.email || user.email || null,
-          linkedin_url: data.profile.linkedin_url,
-          github_url: data.profile.github_url,
-          website_url: data.profile.website_url,
-          twitter_url: data.profile.twitter_url,
-          onboarding_completed: true,
-        },
-        { onConflict: "user_id" }
-      )
-      .select("id")
-      .single();
-
-    throwIfError(error);
-    return profileRow.id;
-  };
-
   const saveEducation = async () => {
     if (!user) return;
     const { error: deleteError } = await supabase

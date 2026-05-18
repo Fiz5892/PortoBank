@@ -10,6 +10,7 @@ import { ExperienceStep } from '@/components/onboarding/ExperienceStep';
 import { PortfolioStep } from '@/components/onboarding/PortfolioStep';
 import { SkillsStep } from '@/components/onboarding/SkillsStep';
 import { CVPreview } from '@/components/onboarding/CVPreview';
+import { CVFormatToolbar, CVFormatOptions, DEFAULT_FORMAT } from '@/components/onboarding/CVFormatToolbar';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -96,6 +97,7 @@ export default function Onboarding() {
   const [data, setData] = useState<OnboardingData>(loadDraftData);
   const [isSaving, setIsSaving]   = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [format, setFormat] = useState<CVFormatOptions>(DEFAULT_FORMAT);
 
   // Track whether we have already merged Supabase data once so we don't
   // overwrite localStorage edits on subsequent re-renders.
@@ -670,8 +672,9 @@ export default function Onboarding() {
         </div>
 
         {/* Right Column – CV Preview */}
-        <div className="w-[58%] bg-gray-50 dark:bg-gray-800 p-6 overflow-hidden flex flex-col">
-          <CVPreview data={data} />
+        <div className="w-[58%] bg-gray-50 dark:bg-gray-800 p-6 overflow-hidden flex flex-col gap-3">
+          <CVFormatToolbar format={format} onChange={setFormat} />
+          <CVPreview data={data} format={format} />
         </div>
       </div>
     </div>
