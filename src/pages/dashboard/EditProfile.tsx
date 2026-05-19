@@ -13,6 +13,7 @@ import { ExperienceStep } from "@/components/onboarding/ExperienceStep";
 import { PortfolioStep } from "@/components/onboarding/PortfolioStep";
 import { SkillsStep } from "@/components/onboarding/SkillsStep";
 import { CVPreview } from "@/components/onboarding/CVPreview";
+import { CVFormatToolbar, CVFormatOptions, DEFAULT_FORMAT } from "@/components/onboarding/CVFormatToolbar";
 import type {
   EducationEntry,
   ExperienceEntry,
@@ -64,6 +65,7 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [downloadingCV, setDownloadingCV] = useState(false);
+  const [format, setFormat] = useState<CVFormatOptions>(DEFAULT_FORMAT);
 
   useEffect(() => {
     if (!user) return;
@@ -479,8 +481,9 @@ const EditProfile = () => {
               </div>
             </div>
 
-            <div className="flex-1 bg-muted/40 p-6 overflow-hidden">
-              <CVPreview data={data} />
+            <div className="flex-1 bg-muted/40 p-6 overflow-hidden flex flex-col gap-3">
+              <CVFormatToolbar format={format} onChange={setFormat} />
+              <CVPreview data={data} format={format} />
             </div>
           </div>
         )}
