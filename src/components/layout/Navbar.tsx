@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationsBell from "@/components/social/NotificationsBell";
 import MessagesIcon from "@/components/social/MessagesIcon";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -89,6 +90,7 @@ const Navbar = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           {user ? (
             <>
               <MessagesIcon />
@@ -135,6 +137,7 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden flex items-center gap-1">
+          <ThemeToggle />
           {user && (
             <>
               <MessagesIcon />
