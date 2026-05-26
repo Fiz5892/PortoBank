@@ -109,7 +109,7 @@ export function AppReviewPopup() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] w-[95vw] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Bagaimana pengalaman Anda?</DialogTitle>
           <DialogDescription>
@@ -150,20 +150,21 @@ export function AppReviewPopup() {
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2 mt-2 items-center">
           <Button
             type="button"
             variant="ghost"
-            className="sm:mr-auto text-muted-foreground"
+            className="sm:mr-auto text-muted-foreground w-full sm:w-auto"
             onClick={handleDontShowAgain}
             disabled={submitting}
           >
             Jangan tampilkan lagi
           </Button>
-          <div className="flex gap-2 sm:justify-end">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => setOpen(false)}
               disabled={submitting}
             >
@@ -171,6 +172,7 @@ export function AppReviewPopup() {
             </Button>
             <Button
               type="button"
+              className="w-full sm:w-auto"
               onClick={handleSubmit}
               disabled={submitting || rating === 0}
             >
