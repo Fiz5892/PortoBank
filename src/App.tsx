@@ -25,6 +25,7 @@ import AdminLogs from "./pages/admin/AdminLogs.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Suspended from "./pages/Suspended.tsx";
 import ScrollToTop from "./components/layout/ScrollToTop.tsx";
+import { AppReviewPopup } from "./components/ui/AppReviewPopup.tsx";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <AppReviewPopup />
           <AnimatedRoutes />
         </BrowserRouter>
       </TooltipProvider>
