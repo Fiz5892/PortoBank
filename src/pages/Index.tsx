@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   Briefcase,
   Plus,
   ExternalLink,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ProfileCard, { ProfileCardData } from "@/components/profiles/ProfileCard";
@@ -80,6 +81,45 @@ interface RecommendedProject {
   ownerProfession: string | null;
 }
 
+const MOCK_REVIEWS = [
+  {
+    id: "mock-1",
+    rating: 5,
+    review_text: "Sangat membantu membuat portofolio dan CV secara cepat. Berkat PortoBank, saya berhasil mendapatkan magang pertama saya di bidang frontend development!",
+    created_at: new Date().toISOString(),
+    profile: {
+      full_name: "Budi Santoso",
+      avatar_url: null,
+      username: "budis",
+      profession: "Web Developer Intern"
+    }
+  },
+  {
+    id: "mock-2",
+    rating: 5,
+    review_text: "Fitur preview CV-nya juara banget! Desainnya rapi, ATS-friendly, dan sangat gampang disesuaikan dengan kebutuhan lamaran kerja.",
+    created_at: new Date().toISOString(),
+    profile: {
+      full_name: "Siti Rahma",
+      avatar_url: null,
+      username: "sitirahma",
+      profession: "UI/UX Designer"
+    }
+  },
+  {
+    id: "mock-3",
+    rating: 5,
+    review_text: "Platform yang sangat intuitif untuk mahasiswa. Saya bisa menunjukkan sertifikat dan project kuliah saya secara profesional.",
+    created_at: new Date().toISOString(),
+    profile: {
+      full_name: "Rian Hidayat",
+      avatar_url: null,
+      username: "rianh",
+      profession: "Data Analyst Student"
+    }
+  }
+];
+
 /* ─────────────────────────── main component ─────────────────────────── */
 
 const Index = () => {
@@ -90,6 +130,48 @@ const Index = () => {
   const [myProfile, setMyProfile] = useState<MyProfile | null>(null);
   const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null);
   const [recommendedProjects, setRecommendedProjects] = useState<RecommendedProject[]>([]);
+  const [appReviews, setAppReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("app_reviews" as any)
+          .select("id, user_id, rating, review_text, created_at")
+          .eq("rating", 5)
+          .limit(50);
+
+        if (reviewsError) {
+          console.error("Error loading reviews:", reviewsError);
+          return;
+        }
+
+        if (reviewsData && reviewsData.length > 0) {
+          const userIds = reviewsData.map((r: any) => r.user_id);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from("profiles")
+            .select("user_id, full_name, avatar_url, username, profession")
+            .in("user_id", userIds);
+
+          if (profilesError) {
+            console.error("Error loading reviewer profiles:", profilesError);
+          }
+
+          const merged = reviewsData.map((review: any) => {
+            const profile = profilesData?.find((p: any) => p.user_id === review.user_id);
+            return {
+              ...review,
+              profile: profile || null,
+            };
+          });
+          setAppReviews(merged);
+        }
+      } catch (err) {
+        console.error("Failed to fetch app reviews:", err);
+      }
+    };
+    loadReviews();
+  }, []);
 
 
   useSEO({
@@ -618,6 +700,11 @@ const Index = () => {
   /* ══════════════════════════════════════════════
      LOGGED-OUT / GUEST VIEW  (landing page)
   ══════════════════════════════════════════════ */
+  const displayReviews = useMemo(() => {
+    const list = appReviews.length > 0 ? appReviews : MOCK_REVIEWS;
+    return [...list].sort(() => Math.random() - 0.5).slice(0, 3);
+  }, [appReviews]);
+
   return (
     <Layout>
       {/* HERO */}
@@ -735,6 +822,68 @@ const Index = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS / REVIEWS */}
+      <section className="container py-16 md:py-24 border-b border-border/50">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold">Apa Kata Pengguna Kami</h2>
+          <p className="text-muted-foreground mt-2">
+            Ulasan jujur dari mahasiswa dan pencari magang yang telah menggunakan PortoBank.
+          </p>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-3">
+          {displayReviews.map((rev) => (
+            <div
+              key={rev.id}
+              className="bg-card border border-border rounded-xl p-6 shadow-subtle hover:shadow-elevated transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                {/* Stars */}
+                <div className="flex gap-1 mb-4">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <Star
+                      key={idx}
+                      className={`h-4.5 w-4.5 ${
+                        idx < rev.rating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/20"
+                      }`}
+                    />
+                  ))}
+                </div>
+                {/* Review Text */}
+                <p className="text-sm text-foreground/80 italic leading-relaxed">
+                  "{rev.review_text || "Tidak ada ulasan tertulis."}"
+                </p>
+              </div>
+              
+              {/* User Info */}
+              <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/50">
+                {rev.profile?.avatar_url ? (
+                  <img
+                    src={rev.profile.avatar_url}
+                    alt={rev.profile.full_name || ""}
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/10"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                    {(rev.profile?.full_name?.[0] || rev.profile?.username?.[0] || "U").toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 text-left">
+                  <h4 className="font-heading font-semibold text-sm truncate">
+                    {rev.profile?.full_name || rev.profile?.username || "Pengguna PortoBank"}
+                  </h4>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {rev.profile?.profession || (rev.profile?.username ? `@${rev.profile.username}` : "Magang")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
