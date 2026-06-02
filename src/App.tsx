@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import EditProfile from "./pages/dashboard/EditProfile.tsx";
+import ManageProjects from "./pages/dashboard/ManageProjects.tsx";
 import Inbox from "./pages/Inbox.tsx";
 import DashboardSettings from "./pages/dashboard/Settings.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
