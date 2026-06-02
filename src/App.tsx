@@ -48,6 +48,7 @@ const AnimatedRoutes = () => {
       <Route path="/suspended" element={<Suspended />} />
       <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
       <Route path="/dashboard/profile" element={<EditProfile />} />
+      <Route path="/dashboard/projects" element={<ManageProjects />} />
       <Route path="/inbox" element={<Inbox />} />
       <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
       <Route path="/dashboard/settings" element={<DashboardSettings />} />
