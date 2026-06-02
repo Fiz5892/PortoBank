@@ -61,7 +61,7 @@ export const fetchCVDataByUserId = async (userId: string, email?: string | null)
     id: exp.id,
     job_title: exp.job_title || "",
     company_name: exp.company_name || "",
-    employment_type: exp.employment_type || "Full-time",
+    employment_type: (exp.employment_type || "Full-time") as ExperienceEntry["employment_type"],
     location: exp.location || "",
     start_date: exp.start_date && typeof exp.start_date === 'string' ? exp.start_date.slice(0, 7) : "",
     end_date: exp.end_date && typeof exp.end_date === 'string' ? exp.end_date.slice(0, 7) : null,
