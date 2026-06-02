@@ -47,6 +47,7 @@ interface FormState {
   cover_url: string;
   external_link: string;
   tags: string[];
+  preview_images: string[];
 }
 
 const emptyForm: FormState = {
@@ -56,6 +57,7 @@ const emptyForm: FormState = {
   cover_url: "",
   external_link: "",
   tags: [],
+  preview_images: [],
 };
 
 const ManageProjects = () => {
@@ -67,6 +69,10 @@ const ManageProjects = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [tagDraft, setTagDraft] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>("");
+  const [previewFiles, setPreviewFiles] = useState<File[]>([]);
+  const [previewPreviews, setPreviewPreviews] = useState<string[]>([]);
   const [toDelete, setToDelete] = useState<ProjectRow | null>(null);
 
   const ensurePortfolio = async (): Promise<string | null> => {
@@ -156,7 +162,44 @@ const ManageProjects = () => {
   const removeTag = (t: string) =>
     setForm({ ...form, tags: form.tags.filter((x) => x !== t) });
 
-  const handleSave = async () => {
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from('project_images').upload(fileName, file);
+    if (uploadError) {
+      toast.error(uploadError.message);
+      return;
+    }
+    const { data } = supabase.storage.from('project_images').getPublicUrl(fileName);
+    if (data?.publicUrl) {
+      setForm({ ...form, cover_url: data.publicUrl });
+    }
+  };
+
+  const handlePreviewChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setPreviewFiles(files);
+    const previews = files.map(f => URL.createObjectURL(f));
+    setPreviewPreviews(previews);
+    const uploadedUrls: string[] = [];
+    for (const file of files) {
+      const ext = file.name.split('.').pop();
+      const name = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('project_images').upload(name, file);
+      if (error) {
+        toast.error(error.message);
+        continue;
+      }
+      const { data } = supabase.storage.from('project_images').getPublicUrl(name);
+      if (data?.publicUrl) uploadedUrls.push(data.publicUrl);
+    }
+    setForm({ ...form, preview_images: uploadedUrls });
+  };  const handleSave = async () => {
     if (!portfolioId) return;
     if (!form.title.trim()) {
       toast.error("Judul wajib diisi");
@@ -171,6 +214,7 @@ const ManageProjects = () => {
       cover_url: form.cover_url.trim() || null,
       external_link: form.external_link.trim() || null,
       tags: form.tags,
+      preview_images: form.preview_images,
     };
     let error;
     if (form.id) {
@@ -345,15 +389,32 @@ const ManageProjects = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="cover">Cover Image URL</Label>
+              <Label htmlFor="cover">Cover Image File</Label>
               <Input
                 id="cover"
-                value={form.cover_url}
-                onChange={(e) => setForm({ ...form, cover_url: e.target.value })}
-                placeholder="https://..."
+                type="file"
+                accept="image/*"
+                onChange={handleCoverChange}
               />
+              {coverPreview && (
+                <img src={coverPreview} alt="Cover preview" className="h-24 w-24 object-cover mt-2" />
+              )}
             </div>
-
+            <div className="space-y-1.5">
+              <Label htmlFor="previews">Preview Images (multiple)</Label>
+              <Input
+                id="previews"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePreviewChange}
+              />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {previewPreviews.map((src, idx) => (
+                  <img key={idx} src={src} alt={`Preview ${idx}`} className="h-16 w-16 object-cover" />
+                ))}
+              </div>
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="link">External Link</Label>
               <Input

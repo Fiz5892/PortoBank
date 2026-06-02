@@ -409,9 +409,15 @@ const Index = () => {
     return "Selamat malam";
   };
 
+  const displayReviews = useMemo(() => {
+    const list = appReviews.length > 0 ? appReviews : MOCK_REVIEWS;
+    return [...list].sort(() => Math.random() - 0.5).slice(0, 3);
+  }, [appReviews]);
+
   /* ══════════════════════════════════════════════
-     LOGGED-IN VIEW
-  ══════════════════════════════════════════════ */
+   LOGGED-IN VIEW
+   ══════════════════════════════════════════════ */
+
   if (user) {
     return (
       <Layout>
@@ -700,10 +706,7 @@ const Index = () => {
   /* ══════════════════════════════════════════════
      LOGGED-OUT / GUEST VIEW  (landing page)
   ══════════════════════════════════════════════ */
-  const displayReviews = useMemo(() => {
-    const list = appReviews.length > 0 ? appReviews : MOCK_REVIEWS;
-    return [...list].sort(() => Math.random() - 0.5).slice(0, 3);
-  }, [appReviews]);
+
 
   return (
     <Layout>
