@@ -25,7 +25,7 @@ const MobileBottomTabs = ({ unread: _unread }: Props) => {
       className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur border-t border-border"
       aria-label="Dashboard navigation"
     >
-      <ul className="grid grid-cols-2">
+      <ul className="grid grid-cols-3">
         {items.map((item) => (
           <li key={item.to}>
             <NavLink
