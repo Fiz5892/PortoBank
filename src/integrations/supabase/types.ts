@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          review_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       educations: {
         Row: {
           created_at: string
@@ -398,22 +425,25 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
+          level: string | null
           name: string
-          profile_id: string
+          profile_id: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
           id?: string
+          level?: string | null
           name: string
-          profile_id: string
+          profile_id?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string
           id?: string
+          level?: string | null
           name?: string
-          profile_id?: string
+          profile_id?: string | null
         }
         Relationships: [
           {
@@ -481,6 +511,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_conversation_for_me: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
+      delete_conversation_for_me: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
       delete_message_for_everyone: {
         Args: { p_message_id: string }
         Returns: undefined

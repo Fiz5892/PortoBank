@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import EditProfile from "./pages/dashboard/EditProfile.tsx";
+import ManageProjects from "./pages/dashboard/ManageProjects.tsx";
 import Inbox from "./pages/Inbox.tsx";
 import DashboardSettings from "./pages/dashboard/Settings.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
@@ -47,6 +48,7 @@ const AnimatedRoutes = () => {
       <Route path="/suspended" element={<Suspended />} />
       <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
       <Route path="/dashboard/profile" element={<EditProfile />} />
+      <Route path="/dashboard/projects" element={<ManageProjects />} />
       <Route path="/inbox" element={<Inbox />} />
       <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
       <Route path="/dashboard/settings" element={<DashboardSettings />} />

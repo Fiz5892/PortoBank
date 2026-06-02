@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   UserCog,
+  FolderKanban,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ interface Props {
 
 const items = [
   { to: "/dashboard/profile", label: "Profile", icon: UserCog, end: true },
+  { to: "/dashboard/projects", label: "Projects", icon: FolderKanban, end: false },
   { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
 ];
 
@@ -23,7 +25,7 @@ const MobileBottomTabs = ({ unread: _unread }: Props) => {
       className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur border-t border-border"
       aria-label="Dashboard navigation"
     >
-      <ul className="grid grid-cols-2">
+      <ul className="grid grid-cols-3">
         {items.map((item) => (
           <li key={item.to}>
             <NavLink

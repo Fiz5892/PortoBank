@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   
   UserCog,
+  FolderKanban,
   Settings as SettingsIcon,
   ExternalLink,
   Loader2,
@@ -99,6 +100,7 @@ const DashboardLayout = ({ children }: Props) => {
 
   const navItems = [
     { to: "/dashboard/profile", label: "Edit Profile", icon: UserCog, end: true },
+    { to: "/dashboard/projects", label: "Manage Projects", icon: FolderKanban, end: false },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
   ];
 
