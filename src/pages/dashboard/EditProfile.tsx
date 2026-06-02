@@ -173,6 +173,31 @@ const EditProfile = () => {
     load();
   }, [user]);
 
+  const saveProfile = async (): Promise<string | null> => {
+    if (!user) return null;
+    const p = data.profile;
+    const payload = {
+      full_name: p.full_name || null,
+      profession: p.profession || null,
+      bio: p.bio || null,
+      location: p.location || null,
+      avatar_url: p.avatar_url || null,
+      email_contact: p.email || null,
+      linkedin_url: p.linkedin_url || null,
+      github_url: p.github_url || null,
+      website_url: p.website_url || null,
+      twitter_url: p.twitter_url || null,
+    };
+    const { data: updated, error } = await supabase
+      .from("profiles")
+      .update(payload)
+      .eq("user_id", user.id)
+      .select("id")
+      .maybeSingle();
+    throwIfError(error);
+    return updated?.id ?? null;
+  };
+
   const saveEducation = async () => {
     if (!user) return;
     const { error: deleteError } = await supabase
