@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   UserCog,
+  FolderKanban,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ interface Props {
 
 const items = [
   { to: "/dashboard/profile", label: "Profile", icon: UserCog, end: true },
+  { to: "/dashboard/projects", label: "Projects", icon: FolderKanban, end: false },
   { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, end: false },
 ];
 
