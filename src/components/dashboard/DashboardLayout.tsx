@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   
   UserCog,
+  FolderKanban,
   Settings as SettingsIcon,
   ExternalLink,
   Loader2,
