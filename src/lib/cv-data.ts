@@ -73,8 +73,8 @@ export const fetchCVDataByUserId = async (userId: string, email?: string | null)
   const skills: SkillEntry[] = (skillsData ?? []).map(skill => ({
     id: skill.id,
     name: skill.name || "",
-    category: skill.category || "Programming Language",
-    level: skill.level || "Intermediate",
+    category: (skill.category || "Programming Language") as SkillEntry["category"],
+    level: (skill.level || "Intermediate") as SkillEntry["level"],
   }));
 
   return {
